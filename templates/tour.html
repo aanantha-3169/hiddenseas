@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{ tour.title }} - Hidden SEA</title>
+</head>
+
+<body class="bg-gray-950 text-white font-sans antialiased pb-12">
+
+    <!-- Hero Section / Map Header -->
+    <div class="relative min-h-[50vh] flex flex-col justify-end">
+        <!-- Background Image (PNG Map) -->
+        <div class="absolute inset-0 z-0">
+            {% if tour.map_url %}
+            <img src="{{ tour.map_url }}" alt="Atmospheric Map" class="w-full h-full object-cover">
+            {% else %}
+            <div class="w-full h-full bg-gradient-to-br {{ tour.vibe }}"></div>
+            {% endif %}
+            <div
+                class="absolute inset-0 bg-gray-950/80 backdrop-blur-[2px] bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent">
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10 px-6 py-8 pb-12 w-full max-w-7xl mx-auto">
+            <a href="/" class="text-white/60 text-sm mb-6 inline-flex items-center hover:text-white transition group">
+                <span class="mr-1 group-hover:-translate-x-1 transition">&larr;</span> Back to Home
+            </a>
+            <h1
+                class="text-4xl md:text-6xl font-bold mb-4 leading-tight max-w-4xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                {{ tour.title }}</h1>
+            <p class="text-gray-300 text-sm md:text-lg max-w-2xl mb-8 leading-relaxed">{{ tour.description }}</p>
+
+            <!-- Primary Audio Player -->
+            <div class="w-full max-w-2xl bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Audio Guide</span>
+                    <span class="text-[10px] font-mono text-gray-500">HI-RES AUDIO</span>
+                </div>
+                <audio controls class="w-full h-10 accent-cyan-500">
+                    <source src="{{ tour.audio_url }}" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area: Split Layout -->
+    <div class="px-6 py-8 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+
+            <!-- Left Column: PDF Guide -->
+            <div class="flex flex-col h-[800px] lg:h-auto min-h-[600px]">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                            </path>
+                        </svg>
+                        Illustrated Guide
+                    </h3>
+                    {% if tour.pdf_link %}
+                    <a href="{{ tour.pdf_link }}" target="_blank"
+                        class="text-xs text-cyan-400 hover:text-cyan-300 font-mono border border-cyan-900 bg-cyan-900/20 px-3 py-1 rounded transition hover:bg-cyan-900/40">
+                        OPEN FULLSCREEN &nearr;
+                    </a>
+                    {% endif %}
+                </div>
+                <div
+                    class="flex-grow bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl relative group">
+                    {% if tour.pdf_link %}
+                    <iframe src="{{ tour.pdf_link }}#toolbar=0" class="w-full h-full absolute inset-0 bg-gray-800"
+                        style="border: none;">
+                        This browser does not support PDFs. Please <a href="{{ tour.pdf_link }}">download</a> it.
+                    </iframe>
+                    {% else %}
+                    <div class="flex items-center justify-center h-full text-gray-500">PDF Guide Unavailable</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Map & Spotify -->
+            <div class="flex flex-col space-y-8">
+
+                <!-- Google Map Embed -->
+                <div class="w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Live Route
+                        </h3>
+                        <span class="text-xs font-mono text-gray-500">GOOGLE MAPS</span>
+                    </div>
+                    <div
+                        class="w-full h-[500px] bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-inner relative group">
+                        {% if tour.google_maps_url %}
+                        {% if 'embed' in tour.google_maps_url %}
+                        <iframe src="{{ tour.google_maps_url }}" width="100%" height="100%" style="border:0;"
+                            allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                            class="absolute inset-0 filter grayscale contrast-125 opacity-80 hover:filter-none hover:opacity-100 transition duration-500"></iframe>
+                        {% else %}
+                        <!-- Fallback for Share Links (Lists) -->
+                        <div class="absolute inset-0 w-full h-full">
+                            <img src="{{ tour.map_url }}" alt="Map Background"
+                                class="w-full h-full object-cover opacity-30 blur-sm scale-110 group-hover:scale-100 transition duration-700">
+                            <div class="absolute inset-0 bg-gray-900/60"></div>
+                        </div>
+                        <div
+                            class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center sticky top-0">
+                            <div
+                                class="bg-gray-900/80 backdrop-blur-xl p-6 rounded-2xl border border-gray-700 shadow-2xl max-w-sm">
+                                <h4 class="text-lg font-bold text-white mb-2">Detailed Route Map</h4>
+                                <p class="text-gray-400 text-sm mb-6">Access the full interactive list of stops, pinned
+                                    locations, and navigation directly in the Google Maps app.</p>
+                                <a href="{{ tour.google_maps_url }}" target="_blank"
+                                    class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-lg shadow-blue-900/50 w-full group-hover:ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900">
+                                    <span>Open in Google Maps</span>
+                                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                        </path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div
+                            class="absolute inset-0 flex items-center justify-center text-gray-600 font-mono text-sm p-8 text-center border-2 border-dashed border-gray-800 m-4 rounded-xl">
+                            GOOGLE MAP EMBED URL REQUIRED
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Spotify Playlist -->
+                {% if tour.spotify_id %}
+                <div>
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.019.6-1.141 4.38-1.379 9.899-.719 13.56 1.56.419.24.6.84.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.279c-.6.179-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.2-1.26 11.28-1 15.72 1.62.6.36.84 1.139.48 1.74-.36.6-1.139.84-1.74.48z" />
+                        </svg>
+                        Tunes to Vibe
+                    </h3>
+                    <div class="rounded-xl overflow-hidden shadow-lg border border-gray-800 bg-black">
+                        <iframe style="border-radius:12px"
+                            src="https://open.spotify.com/embed/playlist/{{ tour.spotify_id }}?utm_source=generator&theme=0"
+                            width="100%" height="152" frameBorder="0" allowfullscreen=""
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"></iframe>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
