@@ -46,7 +46,7 @@ tours = {
     "concrete-battle": {
         "id": "concrete-battle",
         "title": "Jakarta’s Concrete Battle",
-        "description": "The struggle for the national soul in a jungle of concrete seen through the eyees of religion and architecture.",
+        "description": "The struggle for the national soul in a jungle of concrete seen through the eyes of religion and architecture.",
         "vibe": "from-gray-800 to-slate-900",
         "audio_url": "/static/audio/Jakarta’s_Concrete_Battle_for_National_Soul.m4a",
         "pdf_link": "/static/pdfs/Jakarta_God_Architect_Concrete_Contradictions.pdf",
