@@ -41,5 +41,6 @@ This app is configured for deployment on **Render**.
 
 1.  Push code to GitHub.
 2.  Connect repo to Render.
-3.  Add `GOOGLE_API_KEY` to Environment Variables.
-4.  Deploy!
+3.  **Environment Variables:**
+    -   (Optional) Add `GOOGLE_API_KEY` if you want to enable the AI chat feature in the future.
+4.  **Deploy:** Click **Create Web Service**.
