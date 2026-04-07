@@ -3,6 +3,7 @@ import re
 import json
 import uuid
 import datetime
+import threading
 import google.generativeai as genai
 import requests as http_requests
 from bs4 import BeautifulSoup
@@ -54,6 +55,40 @@ BADGE_TIERS = [
 def _compute_badges(checks_completed: int) -> list:
     """Return all badge tiers the viber has unlocked."""
     return [b for b in BADGE_TIERS if checks_completed >= b["threshold"]]
+
+# ── Rate Limiter ──────────────────────────────────────────────────────────────
+# In-memory, keyed by (user_id, endpoint). Resets naturally as timestamps age out.
+# Limits per user per 24-hour rolling window:
+RATE_LIMITS = {
+    "create_tour":    3,   # Gemini full-tour generation — most expensive
+    "chat":          20,   # Gemini chat messages
+    "nearby_places": 10,   # Google Places API lookups
+    "resolve_maps":   5,   # Gemini map-URL extraction
+}
+_rate_store: dict = {}          # {(user_id, endpoint): [timestamp, ...]}
+_rate_lock  = threading.Lock()
+
+def _check_rate_limit(endpoint: str) -> tuple[bool, int]:
+    """Returns (allowed, remaining). Caller must be authenticated."""
+    user_id = session.get('user', {}).get('id')
+    if not user_id:
+        return False, 0
+
+    limit = RATE_LIMITS.get(endpoint, 10)
+    now   = datetime.datetime.utcnow()
+    cutoff = now - datetime.timedelta(hours=24)
+    key   = (user_id, endpoint)
+
+    with _rate_lock:
+        timestamps = _rate_store.get(key, [])
+        # Drop calls older than 24 h
+        timestamps = [t for t in timestamps if t > cutoff]
+        if len(timestamps) >= limit:
+            _rate_store[key] = timestamps
+            return False, 0
+        timestamps.append(now)
+        _rate_store[key] = timestamps
+        return True, limit - len(timestamps)
 
 # Auth Decorators
 def login_required(f):
@@ -543,6 +578,10 @@ def admin_approve_vibe(vibe_check_id):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    allowed, remaining = _check_rate_limit("chat")
+    if not allowed:
+        return jsonify({"error": "You've reached the daily chat limit (20 messages). Come back tomorrow!"}), 429
+
     data = request.json
     user_message = data.get('message')
     tour_id = data.get('tour_id')
@@ -657,6 +696,10 @@ def create_tour():
 @login_required
 def api_create_tour():
     """Generate a full tour narrative using Gemini."""
+    allowed, remaining = _check_rate_limit("create_tour")
+    if not allowed:
+        return jsonify({"error": "You've reached the daily tour generation limit (3 per day). Come back tomorrow!"}), 429
+
     data = request.json
     location = data.get('location', '').strip()
     tags = data.get('tags', [])
@@ -848,6 +891,10 @@ def admin_reject_submission(submission_id):
 @app.route('/api/resolve-maps', methods=['POST'])
 def resolve_maps():
     """Resolve a Google Maps list URL and extract place data using Gemini."""
+    allowed, remaining = _check_rate_limit("resolve_maps")
+    if not allowed:
+        return jsonify({"error": "You've reached the daily map resolution limit (5 per day). Come back tomorrow!"}), 429
+
     data = request.json
     url = data.get('url', '').strip()
 
@@ -971,6 +1018,10 @@ PLACES_API_KEY = os.getenv("PLACES_API_KEY")
 @app.route('/api/nearby-places', methods=['POST'])
 def nearby_places():
     """Find nearby restaurants/cafes and tourist sights using Google Places API (New)."""
+    allowed, remaining = _check_rate_limit("nearby_places")
+    if not allowed:
+        return jsonify({"error": "You've reached the daily nearby places limit (10 per day). Come back tomorrow!"}), 429
+
     if not PLACES_API_KEY:
         return jsonify({"error": "Places API key not configured"}), 500
 

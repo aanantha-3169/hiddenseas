@@ -348,10 +348,20 @@
                     </div>
 
                     <a id="success-link" href="#"
-                        class="w-full py-4 rounded-2xl bg-[#2D5A27] hover:bg-[#234a1e] text-white font-extrabold transition transform hover:scale-[1.01] shadow-lg flex items-center justify-center gap-2">
-                        View Your Tour
+                        class="w-full py-4 rounded-2xl bg-[#2D5A27] hover:bg-[#234a1e] text-white font-extrabold transition transform hover:scale-[1.01] shadow-lg flex items-center justify-center gap-2 mb-3">
+                        View Full Tour
                         <span class="material-symbols-outlined text-[18px]">explore</span>
                     </a>
+
+                    <div class="border-t border-gray-100 pt-4 mt-1">
+                        <p class="text-xs text-gray-400 mb-3 font-medium">Happy with this route? Submit it to be added to the Hidden SEA catalogue.</p>
+                        <button id="quick-submit-btn" onclick="quickSubmit()"
+                            class="w-full py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold transition flex items-center justify-center gap-2 text-sm">
+                            <span class="material-symbols-outlined text-[18px]">send</span>
+                            Submit for Review
+                        </button>
+                        <div id="quick-submit-status" class="hidden mt-3 text-sm font-bold text-center rounded-xl py-2 px-4"></div>
+                    </div>
                 </div>
             </div>
 
@@ -513,7 +523,9 @@
                 });
                 const data = await resp.json();
 
-                if (data.status === 'success') {
+                if (resp.status === 429) {
+                    showError(data.error || 'Daily limit reached. Come back tomorrow!');
+                } else if (data.status === 'success') {
                     updateProgress('research', 'done');
                     updateProgress('narrative', 'done');
                     updateProgress('stops', 'done');
@@ -543,6 +555,7 @@
         }
 
         function showSuccess(data) {
+            generatedTourId = data.tour_id;
             document.getElementById('generating-state').classList.add('hidden');
             document.getElementById('success-state').classList.remove('hidden');
             document.getElementById('success-title').textContent = data.title;
@@ -578,6 +591,45 @@
             document.getElementById('generating-state').classList.add('hidden');
             document.getElementById('error-state').classList.remove('hidden');
             document.getElementById('error-message').textContent = msg;
+        }
+
+        let generatedTourId = null;
+
+        async function quickSubmit() {
+            if (!generatedTourId) return;
+            const btn = document.getElementById('quick-submit-btn');
+            const status = document.getElementById('quick-submit-status');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">autorenew</span> Submitting…';
+
+            try {
+                const res = await fetch('/api/submit-tour', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tour_id: generatedTourId })
+                });
+                const data = await res.json();
+
+                btn.classList.add('hidden');
+                status.classList.remove('hidden');
+                if (res.ok) {
+                    status.className = 'mt-3 text-sm font-bold text-center rounded-xl py-2 px-4 bg-blue-50 text-blue-700';
+                    status.textContent = '✓ Submitted for review — we\'ll be in touch!';
+                } else if (data.error === 'already_submitted') {
+                    status.className = 'mt-3 text-sm font-bold text-center rounded-xl py-2 px-4 bg-gray-50 text-gray-500';
+                    status.textContent = 'Already submitted.';
+                } else {
+                    status.className = 'mt-3 text-sm font-bold text-center rounded-xl py-2 px-4 bg-red-50 text-red-600';
+                    status.textContent = data.error || 'Submission failed. Try again from the tour page.';
+                    btn.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Submit for Review';
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Submit for Review';
+                showToast('Network error. Please try again.', 'error');
+            }
         }
 
         function showToast(msg, type) {
