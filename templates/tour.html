@@ -2,171 +2,836 @@
 <html lang="en">
 
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4W77EZBPTD"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-4W77EZBPTD');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="icon" type="image/png"
+        href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png">
+    {% if tour.get('generated') or (tour.get('stops') and tour.stops | length > 0) %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    {% endif %}
     <title>{{ tour.title }} - Hidden SEA</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .narrative-content h2,
+        .narrative-content strong {
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+
+        .narrative-content p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .stop-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #2D5A27;
+            border: 3px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(45, 90, 39, 0.4);
+        }
+
+        /* Custom audio player styling */
+        audio::-webkit-media-controls-panel {
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+
+        /* Places carousel scroll */
+        .places-scroll {
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .places-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Share tooltip */
+        .share-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #2D5A27;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .share-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-950 text-white font-sans antialiased pb-12">
+<body class="bg-white text-gray-900">
 
-    <!-- Hero Section / Map Header -->
-    <div class="relative min-h-[50vh] flex flex-col justify-end">
-        <!-- Background Image (PNG Map) -->
-        <div class="absolute inset-0 z-0">
-            {% if tour.map_url %}
-            <img src="{{ tour.map_url }}" alt="Atmospheric Map" class="w-full h-full object-cover">
-            {% else %}
-            <div class="w-full h-full bg-gradient-to-br {{ tour.vibe }}"></div>
-            {% endif %}
-            <div
-                class="absolute inset-0 bg-gray-950/80 backdrop-blur-[2px] bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent">
+    <!-- Header / Navigation (matching index.html) -->
+    <header class="bg-[#2D5A27] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <a href="/" class="flex items-center gap-2 hover:opacity-90 transition">
+            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-[#2D5A27] text-sm">waves</span>
             </div>
+            <span class="font-bold text-lg tracking-tight">Hidden SEA</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+            <a class="hover:opacity-80 transition" href="/">Destinations</a>
+            <a class="hover:opacity-80 transition" href="/">Tours</a>
+            <a class="hover:opacity-80 transition" href="/">About</a>
+        </nav>
+        <div class="flex items-center gap-4 text-sm font-medium">
+            <a class="hover:opacity-80 transition hidden sm:inline" href="#">Log in</a>
+            <a class="hover:opacity-80 transition hidden sm:inline" href="/create-tour">Create</a>
+            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get
+                started</button>
         </div>
+    </header>
 
-        <!-- Content -->
-        <div class="relative z-10 px-6 py-8 pb-12 w-full max-w-7xl mx-auto">
-            <a href="/" class="text-white/60 text-sm mb-6 inline-flex items-center hover:text-white transition group">
-                <span class="mr-1 group-hover:-translate-x-1 transition">&larr;</span> Back to Home
+    <!-- Hero Section -->
+    <section class="bg-[#2D5A27] text-white px-6 pt-8 pb-12 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <!-- Breadcrumb -->
+            <a href="/" class="text-white/70 text-sm mb-6 inline-flex items-center hover:text-white transition group">
+                <span
+                    class="material-symbols-outlined text-[16px] mr-1 group-hover:-translate-x-1 transition">arrow_back</span>
+                Back to Home
             </a>
-            <h1
-                class="text-4xl md:text-6xl font-bold mb-4 leading-tight max-w-4xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-                {{ tour.title }}</h1>
-            <p class="text-gray-300 text-sm md:text-lg max-w-2xl mb-8 leading-relaxed">{{ tour.description }}</p>
 
-            <!-- Primary Audio Player -->
-            <div class="w-full max-w-2xl bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl">
-                <div class="flex items-center justify-between mb-2 px-1">
-                    <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Audio Guide</span>
-                    <span class="text-[10px] font-mono text-gray-500">HI-RES AUDIO</span>
+            <!-- Badge -->
+            <div class="flex items-center gap-3 mb-4 mt-4">
+                {% if tour.get('generated') %}
+                <span
+                    class="flex items-center gap-1 bg-amber-500/20 text-amber-200 px-3 py-1 rounded-full text-xs font-bold border border-amber-500/30">
+                    ⚡ AI Generated
+                </span>
+                {% elif tour.is_vetted %}
+                <span
+                    class="flex items-center gap-1 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30">
+                    ✨ Vetted <span class="text-white/60 mx-1">|</span> ★ {{ tour.rating }}
+                </span>
+                {% endif %}
+                {% if tour.get('location') %}
+                <span class="text-xs text-white/60 font-medium uppercase tracking-wider">{{ tour.location }}</span>
+                {% endif %}
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-extrabold leading-[0.95] mb-4 max-w-4xl">{{ tour.title }}</h1>
+            <p class="text-white/80 text-sm md:text-lg max-w-2xl mb-8 leading-relaxed">{{ tour.description }}</p>
+        </div>
+    </section>
+
+    <!-- Audio Player + Action Buttons Bar -->
+    <section class="bg-[#f8faf7] border-b border-gray-200 px-6 py-6">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-start lg:items-center gap-6">
+            <!-- Audio Player -->
+            <div class="flex-grow w-full lg:w-auto">
+                {% if tour.audio_url %}
+                <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <span
+                            class="text-[10px] font-bold text-[#2D5A27] uppercase tracking-widest flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">headphones</span> Audio Guide
+                        </span>
+                        <span class="text-[10px] font-mono text-gray-400">HI-RES AUDIO</span>
+                    </div>
+                    <audio controls class="w-full h-10">
+                        <source src="{{ tour.audio_url }}" type="audio/mp4">
+                        Your browser does not support the audio element.
+                    </audio>
                 </div>
-                <audio controls class="w-full h-10 accent-cyan-500">
-                    <source src="{{ tour.audio_url }}" type="audio/mp4">
-                    Your browser does not support the audio element.
-                </audio>
+                {% elif tour.get('generated') %}
+                <div class="bg-white rounded-2xl p-4 border border-gray-200 border-dashed">
+                    <div class="flex items-center gap-3 text-gray-400">
+                        <span class="material-symbols-outlined text-[20px]">mic</span>
+                        <span class="text-sm">Audio guide coming soon — NotebookLM podcast generation is next.</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button onclick="shareTour()"
+                    class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-white transition group"
+                    title="Share Tour">
+                    <span
+                        class="material-symbols-outlined text-[22px] text-gray-500 group-hover:text-[#2D5A27] transition">share</span>
+                    <span class="text-[10px] font-bold text-gray-500 group-hover:text-[#2D5A27]">Share Tour</span>
+                </button>
+                <a href="#vibe-check-info"
+                    class="flex flex-col items-center gap-1 px-4 py-3 bg-[#2D5A27] text-white rounded-xl hover:bg-[#234a1e] transition">
+                    <span class="material-symbols-outlined text-[22px]">verified</span>
+                    <span class="text-[10px] font-bold">Vibe Check</span>
+                </a>
+                <button onclick="alert('Publishing to community coming soon!')"
+                    class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-white transition group"
+                    title="Publish">
+                    <span
+                        class="material-symbols-outlined text-[22px] text-gray-500 group-hover:text-[#2D5A27] transition">public</span>
+                    <span class="text-[10px] font-bold text-gray-500 group-hover:text-[#2D5A27]">Publish</span>
+                </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Main Content Area: Split Layout -->
-    <div class="px-6 py-8 max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+    <!-- Main Content Area -->
+    <section class="px-6 py-12 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-            <!-- Left Column: PDF Guide -->
-            <div class="flex flex-col h-[800px] lg:h-auto min-h-[600px]">
+            <!-- Left Column: Written Guide / Narrative -->
+            <div class="flex flex-col">
+                {% if tour.pdf_link %}
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-                            </path>
-                        </svg>
-                        Illustrated Guide
+                    <h3 class="text-xl font-extrabold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px] text-gray-400">menu_book</span>
+                        Written Guide
                     </h3>
-                    {% if tour.pdf_link %}
                     <a href="{{ tour.pdf_link }}" target="_blank"
-                        class="text-xs text-cyan-400 hover:text-cyan-300 font-mono border border-cyan-900 bg-cyan-900/20 px-3 py-1 rounded transition hover:bg-cyan-900/40">
-                        OPEN FULLSCREEN &nearr;
+                        class="text-xs text-[#2D5A27] hover:underline font-bold flex items-center gap-1">
+                        OPEN FULLSCREEN <span class="material-symbols-outlined text-[14px]">open_in_new</span>
                     </a>
-                    {% endif %}
                 </div>
                 <div
-                    class="flex-grow bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl relative group">
-                    {% if tour.pdf_link %}
-                    <iframe src="{{ tour.pdf_link }}#toolbar=0" class="w-full h-full absolute inset-0 bg-gray-800"
+                    class="flex-grow bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative h-[700px] lg:h-[800px]">
+                    <iframe src="{{ tour.pdf_link }}?v=1#toolbar=0" class="w-full h-full absolute inset-0"
                         style="border: none;">
-                        This browser does not support PDFs. Please <a href="{{ tour.pdf_link }}">download</a> it.
+                        This browser does not support PDFs. <a href="{{ tour.pdf_link }}">Download</a>.
                     </iframe>
-                    {% else %}
-                    <div class="flex items-center justify-center h-full text-gray-500">PDF Guide Unavailable</div>
-                    {% endif %}
                 </div>
+                {% elif tour.get('narrative') %}
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-extrabold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px] text-gray-400">description</span>
+                        Tour Narrative
+                    </h3>
+                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">AI
+                        GENERATED</span>
+                </div>
+                <div class="flex-grow bg-gray-50 rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 overflow-y-auto narrative-content"
+                    style="max-height: 800px;">
+                    <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                        {{ tour.narrative | replace('\n\n', '</p>
+                        <p>') | replace('\n', '<br>') | replace('**', '<strong>') | safe }}
+                    </div>
+                </div>
+                {% else %}
+                <div
+                    class="flex-grow flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-200 text-gray-400 text-sm p-8 text-center min-h-[400px]">
+                    <div>
+                        <span class="material-symbols-outlined text-[48px] text-gray-300 mb-4 block">article</span>
+                        Tour content not yet available.
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
-            <!-- Right Column: Map & Spotify -->
+            <!-- Right Column: Route Map & Extras -->
             <div class="flex flex-col space-y-8">
 
-                <!-- Google Map Embed -->
+                <!-- Vibe Check Status / Bounty CTA / Submit for Review -->
+                <div class="w-full">
+
+                    {% if tour.get('generated') %}
+                    {# ── Generated tour: show Submit for Review panel ── #}
+                    {% set sub_status = tour.get('submission_status') %}
+                    <div class="bg-white rounded-2xl border-2
+                        {% if sub_status == 'approved' %}border-green-100 bg-green-50/30
+                        {% elif sub_status == 'pending' %}border-blue-100 bg-blue-50/30
+                        {% elif sub_status == 'rejected' %}border-red-100 bg-red-50/30
+                        {% else %}border-purple-100 bg-purple-50/30{% endif %}
+                        p-6 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-purple-500 text-[24px]">auto_awesome</span>
+                                    <h4 class="font-black text-lg text-purple-900">AI-Generated Preview</h4>
+                                </div>
+                                {% if not sub_status %}
+                                <span class="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">
+                                    Your Idea
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            {% if sub_status == 'approved' %}
+                            <p class="text-sm text-green-800/80 leading-relaxed mb-4">Your tour idea has been approved and is being added to the main catalogue. Thank you for contributing to Hidden SEA!</p>
+                            <div class="flex items-center gap-2 bg-green-100 text-green-800 py-3 px-4 rounded-xl font-bold text-sm">
+                                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                Tour Approved
+                            </div>
+
+                            {% elif sub_status == 'pending' %}
+                            <p class="text-sm text-blue-800/80 leading-relaxed mb-4">Your tour idea has been submitted and is under review by our team. We'll get back to you soon.</p>
+                            <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-bold text-sm">
+                                <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
+                                Under Review
+                            </div>
+                            <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>
+
+                            {% elif sub_status == 'rejected' %}
+                            <p class="text-sm text-red-800/80 leading-relaxed mb-4">This tour idea wasn't approved this time. Feel free to generate a new one!</p>
+                            <div class="flex items-center gap-2 bg-red-100 text-red-800 py-3 px-4 rounded-xl font-bold text-sm">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                                Not Approved
+                            </div>
+
+                            {% else %}
+                            {# Not yet submitted #}
+                            <p class="text-sm text-purple-800/80 leading-relaxed mb-6">
+                                Happy with this route? Submit it for review and it could become an official Hidden SEA tour — available to the whole community.
+                            </p>
+                            <button id="submit-tour-btn"
+                                onclick="submitTourForReview('{{ tour_id }}')"
+                                class="block w-full text-center bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-md">
+                                Submit for Review →
+                            </button>
+                            <p class="text-[10px] text-center text-purple-700/60 mt-3 font-bold uppercase tracking-widest">Free to submit · Subject to editorial review</p>
+                            {% endif %}
+
+                        </div>
+                        <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600 opacity-[0.05] rounded-full blur-2xl"></div>
+                    </div>
+
+                    {% else %}
+                    {# ── Regular curated tour: show Vibe Check / Bounty panel ── #}
+                    <div class="bg-white rounded-2xl border-2 {% if tour.is_vetted %}border-green-100 bg-green-50/30{% else %}border-amber-100 bg-amber-50/30{% endif %} p-6 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined {% if tour.is_vetted %}text-green-600{% else %}text-amber-600{% endif %} text-[24px]">
+                                        {% if tour.is_vetted %}verified{% else %}error_outline{% endif %}
+                                    </span>
+                                    <h4 class="font-black text-lg {% if tour.is_vetted %}text-green-900{% else %}text-amber-900{% endif %}">
+                                        {% if tour.is_vetted %}Vibe Checked ✓{% else %}AI Generated{% endif %}
+                                    </h4>
+                                </div>
+                                {% if not tour.is_vetted %}
+                                <span class="bg-amber-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">
+                                    IDR 100K BOUNTY
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            {% if tour.is_vetted %}
+                            <p class="text-sm text-green-800/80 leading-relaxed mb-4">
+                                This tour was physically walked and verified by <strong>@{{ tour.viber_handle or 'explorer' }}</strong> on {{ tour.vetted_date or 'Mar 24, 2026' }}. All stops are accurate and accessible.
+                            </p>
+                            <div class="flex items-center gap-3 bg-white/60 backdrop-blur p-3 rounded-xl border border-green-200/50">
+                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-green-600">person</span>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Verified by</p>
+                                    <p class="text-sm font-bold text-green-900">@{{ tour.viber_handle or 'bali_viber' }}</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="text-sm text-amber-800/80 leading-relaxed mb-6">
+                                This route is 100% AI-generated. While usually accurate, it hasn't been human-verified yet. Help the community by claiming the bounty.
+                            </p>
+
+                            {% if not session.user %}
+                                <a href="/login?next=/vibe" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
+                                    Log in to Claim Bounty
+                                </a>
+                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Valid for registered Vibers only</p>
+
+                            {% elif session.user.role not in ['viber', 'admin'] %}
+                                <a href="/become-viber" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
+                                    Become a Viber to Claim
+                                </a>
+                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Apply to join the Viber programme</p>
+
+                            {% elif tour.vibe_status == 'submitted' %}
+                                <div class="w-full text-center bg-amber-50 border-2 border-amber-200 text-amber-700 py-3 rounded-xl font-bold">
+                                    Submission Under Review
+                                </div>
+                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Our team will verify within 48 hrs</p>
+
+                            {% elif tour.user_has_claim %}
+                                <a href="/vibe/submit/{{ tour_id }}" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
+                                    Submit Photos &amp; Videos →
+                                </a>
+                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">You have an active claim on this tour</p>
+
+                            {% else %}
+                                <form action="/vibe/claim/{{ tour_id }}" method="POST">
+                                    <button type="submit" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
+                                        Claim Bounty &amp; Walk Tour
+                                    </button>
+                                </form>
+                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Valid for registered Vibers only</p>
+                            {% endif %}
+
+                            {% endif %}
+                        </div>
+
+                        <div class="absolute -top-12 -right-12 w-32 h-32 {% if tour.is_vetted %}bg-green-600{% else %}bg-amber-600{% endif %} opacity-[0.05] rounded-full blur-2xl"></div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <!-- Route Map -->
                 <div class="w-full">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Live Route
+                        <h3 class="text-xl font-extrabold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px] text-gray-400">map</span>
+                            Route Map
                         </h3>
-                        <span class="text-xs font-mono text-gray-500">GOOGLE MAPS</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            {% if tour.get('stops') %}{{ tour.stops | length }} STOPS{% else %}Powered by Google Maps{%
+                            endif %}
+                        </span>
                     </div>
                     <div
-                        class="w-full h-[500px] bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-inner relative group">
-                        {% if tour.google_maps_url %}
+                        class="w-full h-[450px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative">
+
+                        {% if tour.get('stops') and tour.stops | length > 0 %}
+                        <!-- Leaflet Map for tours with stops -->
+                        <div id="stops-map" class="w-full h-full"></div>
+
+                        {% elif tour.google_maps_url %}
                         {% if 'embed' in tour.google_maps_url %}
                         <iframe src="{{ tour.google_maps_url }}" width="100%" height="100%" style="border:0;"
                             allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                            class="absolute inset-0 filter grayscale contrast-125 opacity-80 hover:filter-none hover:opacity-100 transition duration-500"></iframe>
+                            class="absolute inset-0"></iframe>
                         {% else %}
-                        <!-- Fallback for Share Links (Lists) -->
+                        <!-- Google Maps List Link -->
                         <div class="absolute inset-0 w-full h-full">
+                            {% if tour.map_url %}
                             <img src="{{ tour.map_url }}" alt="Map Background"
-                                class="w-full h-full object-cover opacity-30 blur-sm scale-110 group-hover:scale-100 transition duration-700">
-                            <div class="absolute inset-0 bg-gray-900/60"></div>
+                                class="w-full h-full object-cover opacity-20 blur-sm scale-110">
+                            {% else %}
+                            <div class="w-full h-full bg-gradient-to-br from-green-50 to-emerald-100"></div>
+                            {% endif %}
                         </div>
-                        <div
-                            class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center sticky top-0">
-                            <div
-                                class="bg-gray-900/80 backdrop-blur-xl p-6 rounded-2xl border border-gray-700 shadow-2xl max-w-sm">
-                                <h4 class="text-lg font-bold text-white mb-2">Detailed Route Map</h4>
-                                <p class="text-gray-400 text-sm mb-6">Access the full interactive list of stops, pinned
-                                    locations, and navigation directly in the Google Maps app.</p>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                            <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg max-w-sm">
+                                <span
+                                    class="material-symbols-outlined text-[48px] text-[#2D5A27] mb-4 block">pin_drop</span>
+                                <h4 class="text-lg font-extrabold mb-2">Detailed Route Map</h4>
+                                <p class="text-gray-500 text-sm mb-6">Access the full interactive list of stops, pinned
+                                    locations, and navigation directly in Google Maps.</p>
                                 <a href="{{ tour.google_maps_url }}" target="_blank"
-                                    class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-lg shadow-blue-900/50 w-full group-hover:ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-900">
+                                    class="inline-flex items-center justify-center px-6 py-3 bg-[#2D5A27] hover:bg-[#234a1e] text-white font-bold rounded-full transition transform hover:scale-105 shadow-lg w-full gap-2">
                                     <span>Open in Google Maps</span>
-                                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                        </path>
-                                    </svg>
+                                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                                 </a>
                             </div>
                         </div>
                         {% endif %}
                         {% else %}
                         <div
-                            class="absolute inset-0 flex items-center justify-center text-gray-600 font-mono text-sm p-8 text-center border-2 border-dashed border-gray-800 m-4 rounded-xl">
-                            GOOGLE MAP EMBED URL REQUIRED
+                            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-8 text-center">
+                            <div>
+                                <span class="material-symbols-outlined text-[48px] text-gray-300 mb-4 block">map</span>
+                                Map not available yet.
+                            </div>
                         </div>
                         {% endif %}
                     </div>
+
+                    {% if tour.google_maps_url and not ('embed' in tour.google_maps_url) %}
+                    <a href="{{ tour.google_maps_url }}" target="_blank"
+                        class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#2D5A27] hover:underline">
+                        View full route on Google Maps <span
+                            class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </a>
+                    {% endif %}
                 </div>
 
-                <!-- Spotify Playlist -->
-                {% if tour.spotify_id %}
+                <!-- Stops List -->
+                {% if tour.get('stops') and tour.stops | length > 0 %}
                 <div>
-                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.019.6-1.141 4.38-1.379 9.899-.719 13.56 1.56.419.24.6.84.18 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.279c-.6.179-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.2-1.26 11.28-1 15.72 1.62.6.36.84 1.139.48 1.74-.36.6-1.139.84-1.74.48z" />
-                        </svg>
-                        Tunes to Vibe
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px] text-[#2D5A27]">directions_walk</span>
+                        Walking Order
                     </h3>
-                    <div class="rounded-xl overflow-hidden shadow-lg border border-gray-800 bg-black">
-                        <iframe style="border-radius:12px"
-                            src="https://open.spotify.com/embed/playlist/{{ tour.spotify_id }}?utm_source=generator&theme=0"
-                            width="100%" height="152" frameBorder="0" allowfullscreen=""
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                            loading="lazy"></iframe>
+                    <div class="space-y-3">
+                        {% for stop in tour.stops %}
+                        <div class="flex items-start gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-[#2D5A27]/30 transition group cursor-pointer"
+                            onclick="focusStop({{ loop.index0 }})">
+                            <div
+                                class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2D5A27]/10 border border-[#2D5A27]/30 flex items-center justify-center text-[#2D5A27] text-sm font-bold">
+                                {{ loop.index }}
+                            </div>
+                            <div>
+                                <h4 class="text-gray-900 font-semibold text-sm group-hover:text-[#2D5A27] transition">{{
+                                    stop.name }}</h4>
+                                {% if stop.get('subtitle') %}
+                                <p class="text-gray-400 text-xs italic">{{ stop.subtitle }}</p>
+                                {% endif %}
+                                {% if stop.get('description') %}
+                                <p class="text-gray-500 text-xs mt-1">{{ stop.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
+                </div>
+                {% endif %}
+
+                <!-- Top Rated Stops -->
+                <div id="top-rated-stops">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-extrabold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px] text-gray-400">restaurant</span>
+                            Top Rated Stops
+                        </h3>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Maps</span>
+                    </div>
+                    <div class="places-scroll flex gap-4 overflow-x-auto pb-2" id="top-stops-container">
+                        <!-- Populated by JS from Google Maps data or static fallback -->
+                        <div
+                            class="flex-shrink-0 w-48 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-md transition">
+                            <div
+                                class="h-28 bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[36px] text-amber-400">restaurant</span>
+                            </div>
+                            <div class="p-3">
+                                <h5 class="font-bold text-sm mb-1 truncate">Loading...</h5>
+                                <p class="text-xs text-gray-400">Powered by Google Maps</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                        Top rated restaurants and cafes near tour stops. <a href="{{ tour.google_maps_url or '#' }}"
+                            target="_blank" class="text-[#2D5A27] font-bold hover:underline">Explore on Google Maps
+                            →</a>
+                    </p>
+                </div>
+
+                <!-- Sights Along the Route -->
+                <div id="sights-along-route">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-extrabold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px] text-gray-400">photo_camera</span>
+                            Sights Along the Route
+                        </h3>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Maps</span>
+                    </div>
+                    <div class="places-scroll flex gap-4 overflow-x-auto pb-2" id="sights-container">
+                        <div
+                            class="flex-shrink-0 w-48 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-md transition">
+                            <div
+                                class="h-28 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[36px] text-green-400">photo_camera</span>
+                            </div>
+                            <div class="p-3">
+                                <h5 class="font-bold text-sm mb-1 truncate">Loading...</h5>
+                                <p class="text-xs text-gray-400">Powered by Google Maps</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                        Notable landmarks and sights near the route. <a href="{{ tour.google_maps_url or '#' }}"
+                            target="_blank" class="text-[#2D5A27] font-bold hover:underline">Explore on Google Maps
+                            →</a>
+                    </p>
+                </div>
+
+                <!-- Tags (generated tours) -->
+                {% if tour.get('tags') %}
+                <div class="flex flex-wrap gap-2 mt-2">
+                    {% for tag in tour.tags %}
+                    <span
+                        class="px-3 py-1 rounded-full text-xs bg-gray-100 border border-gray-200 text-gray-600 font-medium">{{
+                        tag }}</span>
+                    {% endfor %}
                 </div>
                 {% endif %}
 
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Vibe Check Info Section -->
+    <section id="vibe-check-info" class="py-16 px-6 bg-[#f0f7ef] border-t border-gray-100">
+        <div class="max-w-4xl mx-auto text-center">
+            <div
+                class="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-2 rounded-full text-sm font-bold mb-6">
+                <span class="material-symbols-outlined text-[18px]">verified</span>
+                Vibe Check
+            </div>
+            <h2 class="text-3xl font-extrabold mb-4">Want this tour verified?</h2>
+            <p class="text-gray-600 leading-relaxed mb-8 max-w-2xl mx-auto">
+                Submit this tour for our Vibe Check process. Real locals and travel experts will walk the route, verify
+                stops, and refine the narrative. Once approved, the tour earns the <span
+                    class="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✨
+                    Vetted</span> badge.
+            </p>
+            <button onclick="alert('Vibe Check submission coming soon!')"
+                class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-8 py-4 rounded-full font-bold hover:bg-[#234a1e] transition transform hover:scale-105 shadow-lg">
+                <span class="material-symbols-outlined text-[20px]">verified</span>
+                Submit for Vibe Check
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-gray-100">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-[#2D5A27] rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-[10px]">waves</span>
+                </div>
+                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA. Built with Gemini.</p>
+            </div>
+            <nav class="flex gap-8 text-xs font-bold text-gray-600 uppercase tracking-widest">
+                <a class="hover:text-black transition" href="/">Home</a>
+                <a class="hover:text-black transition" href="#">About</a>
+                <a class="hover:text-black transition" href="#">Privacy</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- Share Toast Notification -->
+    <div class="share-toast" id="share-toast">Link copied to clipboard!</div>
+
+    <!-- Scripts -->
+    <script>
+        // Share Tour
+        function shareTour() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: '{{ tour.title }} - Hidden SEA', url: url });
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    const toast = document.getElementById('share-toast');
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 2500);
+                });
+            }
+        }
+
+        // Populate Top Rated Stops and Sights via Google Places API
+        (function () {
+            const topStopsContainer = document.getElementById('top-stops-container');
+            const sightsContainer = document.getElementById('sights-container');
+
+            // Determine center coordinates from tour data
+            const tourData = {{ tour | tojson
+        }};
+        let centerLat = -6.1375;
+        let centerLng = 106.8131;
+
+        if (tourData.center && tourData.center.lat && tourData.center.lng) {
+            centerLat = tourData.center.lat;
+            centerLng = tourData.center.lng;
+        } else if (tourData.stops && tourData.stops.length > 0) {
+            centerLat = tourData.stops.reduce((s, p) => s + p.lat, 0) / tourData.stops.length;
+            centerLng = tourData.stops.reduce((s, p) => s + p.lng, 0) / tourData.stops.length;
+        }
+
+        function renderPlaceCard(place) {
+            const photoHtml = place.photo_url
+                ? `<img src="${place.photo_url}" alt="${place.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />`
+                : `<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center"><span class="material-symbols-outlined text-[36px] text-gray-300">image</span></div>`;
+
+            const ratingHtml = place.rating
+                ? `<div class="flex items-center gap-0.5 mt-1"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span><span class="text-[11px] font-bold text-gray-600">${place.rating}</span>${place.review_count ? `<span class="text-[10px] text-gray-400">(${place.review_count})</span>` : ''}</div>`
+                : '';
+
+            return `
+                    <a href="${place.maps_url || '#'}" target="_blank" class="flex-shrink-0 w-52 bg-white rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-lg hover:border-[#2D5A27]/20 transition cursor-pointer block">
+                        <div class="h-32 overflow-hidden bg-gray-100">
+                            ${photoHtml}
+                        </div>
+                        <div class="p-3">
+                            <h5 class="font-bold text-sm mb-0.5 truncate group-hover:text-[#2D5A27] transition">${place.name}</h5>
+                            <p class="text-[11px] text-gray-400 truncate flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[12px]">location_on</span>
+                                ${place.address ? place.address.split(',').slice(0, 2).join(',') : 'View on Maps'}
+                            </p>
+                            ${ratingHtml}
+                        </div>
+                    </a>
+                `;
+        }
+
+        function renderLoading(container) {
+            container.innerHTML = Array(4).fill('').map(() => `
+                    <div class="flex-shrink-0 w-52 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden animate-pulse">
+                        <div class="h-32 bg-gray-200"></div>
+                        <div class="p-3 space-y-2">
+                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function renderError(container, type) {
+            const icon = type === 'restaurant' ? 'restaurant' : 'photo_camera';
+            container.innerHTML = `
+                    <div class="flex-shrink-0 w-full py-8 text-center text-gray-400">
+                        <span class="material-symbols-outlined text-[36px] text-gray-300 mb-2 block">${icon}</span>
+                        <p class="text-sm">Could not load places. <a href="{{ tour.google_maps_url or '#' }}" target="_blank" class="text-[#2D5A27] font-bold hover:underline">Try Google Maps →</a></p>
+                    </div>
+                `;
+        }
+
+        async function fetchPlaces(type, container) {
+            renderLoading(container);
+            try {
+                const resp = await fetch('/api/nearby-places', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: centerLat, lng: centerLng, type: type, radius: 1000 })
+                });
+                const data = await resp.json();
+                if (data.places && data.places.length > 0) {
+                    container.innerHTML = data.places.map(p => renderPlaceCard(p)).join('');
+                } else {
+                    renderError(container, type);
+                }
+            } catch (e) {
+                console.error(`[Places] ${type} fetch error:`, e);
+                renderError(container, type);
+            }
+        }
+
+        // Fetch both types
+        fetchPlaces('restaurant', topStopsContainer);
+        fetchPlaces('tourist_attraction', sightsContainer);
+        }) ();
+    </script>
+
+    {% if tour.get('stops') and tour.stops | length > 0 %}
+    <script>
+        // Leaflet map
+        const stops = {{ tour.stops | tojson }};
+        const map = L.map('stops-map', { zoomControl: true, attributionControl: true });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const markers = [];
+        const bounds = [];
+
+        stops.forEach((stop, i) => {
+            const latlng = [stop.lat, stop.lng];
+            bounds.push(latlng);
+
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div class="stop-marker">${i + 1}</div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const marker = L.marker(latlng, { icon })
+                .bindPopup(`
+                <div style="min-width:180px;">
+                    <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:4px;">
+                        ${i + 1}. ${stop.name}
+                    </div>
+                    ${stop.subtitle ? `<div style="font-size:11px;color:#666;font-style:italic;margin-bottom:4px;">${stop.subtitle}</div>` : ''}
+                    ${stop.description ? `<div style="font-size:11px;color:#444;">${stop.description}</div>` : ''}
+                </div>
+            `)
+                .addTo(map);
+            markers.push(marker);
+        });
+
+        if (bounds.length > 1) {
+            L.polyline(bounds, {
+                color: '#2D5A27',
+                weight: 3,
+                dashArray: '8, 12',
+                lineCap: 'round',
+                opacity: 0.7
+            }).addTo(map);
+            map.fitBounds(bounds, { padding: [40, 40] });
+        } else if (bounds.length === 1) {
+            map.setView(bounds[0], 15);
+        }
+
+        function focusStop(index) {
+            if (markers[index]) {
+                map.setView([stops[index].lat, stops[index].lng], 17, { animate: true });
+                markers[index].openPopup();
+            }
+        }
+    </script>
+    {% endif %}
+
+    {% if tour.get('generated') and not tour.get('submission_status') %}
+    <script>
+        async function submitTourForReview(tourId) {
+            const btn = document.getElementById('submit-tour-btn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting…';
+
+            try {
+                const res = await fetch('/api/submit-tour', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tour_id: tourId})
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Swap button for a success state without full reload
+                    btn.parentElement.innerHTML = `
+                        <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
+                            Under Review
+                        </div>
+                        <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>
+                    `;
+                } else if (data.error === 'already_submitted') {
+                    btn.textContent = 'Already Submitted';
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Submit for Review →';
+                    alert(data.error || 'Submission failed. Please try again.');
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = 'Submit for Review →';
+                alert('Network error. Please try again.');
+            }
+        }
+    </script>
+    {% endif %}
 
 </body>
 

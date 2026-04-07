@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Vibe Check | {{ check.tour_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#fafafa] min-h-screen">
+
+    <!-- Subheader/Review Bar -->
+    <div class="sticky top-0 bg-white border-b border-gray-100 px-10 py-6 flex justify-between items-center z-50 shadow-sm">
+        <div class="flex items-center gap-6">
+            <a href="/admin" class="flex items-center gap-2 text-gray-400 hover:text-black transition uppercase text-[10px] font-black tracking-widest">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Back
+            </a>
+            <div class="h-6 w-[1px] bg-gray-100"></div>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight leading-none uppercase">{{ check.tour_title }}</h1>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Viber: @{{ check.profiles.handle }} • {{ check.submitted_at[:11] }}</p>
+            </div>
+        </div>
+        <div class="flex gap-4">
+            <!-- Approval Form -->
+            <form action="/admin/vibe/{{ check.id }}/approve" method="POST">
+                <button type="submit" class="bg-black text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg transform hover:-translate-y-0.5">Approve & Pay Bounty</button>
+            </form>
+            <button class="bg-red-50 text-red-600 border border-red-100 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition">Reject</button>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-10 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        
+        <!-- Left: Overall Metadata -->
+        <div class="lg:col-span-1 space-y-10">
+            <section class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
+                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Submission Summary</h3>
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Viber Profile</p>
+                        <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
+                            <div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-black">@</div>
+                            <div>
+                                <p class="text-sm font-black uppercase">@{{ check.profiles.handle }}</p>
+                                <p class="text-[10px] font-bold text-gray-400">{{ check.profiles.display_name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">GoPay Account</p>
+                        <p class="text-lg font-black text-blue-600 bg-blue-50 px-4 py-2 rounded-2xl inline-block">{{ check.profiles.gopay_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase mb-2">Overall Notes</p>
+                        <p class="text-sm text-gray-600 leading-relaxed italic">"{{ check.overall_notes or 'No overall notes provided.' }}"</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right: Stop By Stop Evidence -->
+        <div class="lg:col-span-2 space-y-12 pb-20">
+            <h2 class="text-3xl font-black tracking-tight">Stop Evidence</h2>
+
+            {% for stop in stops %}
+            <div class="bg-white rounded-[40px] shadow-sm border border-gray-100 p-10 space-y-8 relative overflow-hidden">
+                <!-- Stop Header -->
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="bg-gray-100 text-gray-500 text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest mb-3 inline-block">Stop {{ stop.stop_index + 1 }}</span>
+                        <h4 class="text-2xl font-black tracking-tight">{{ stop.stop_name }}</h4>
+                    </div>
+                    {% if stop.is_accurate %}
+                    <span class="bg-green-50 text-green-700 text-[10px] font-black px-4 py-1 rounded-full border border-green-100 uppercase tracking-widest">Verified Accurate ✓</span>
+                    {% else %}
+                    <span class="bg-red-50 text-red-600 text-[10px] font-black px-4 py-1 rounded-full border border-red-100 uppercase tracking-widest">Inaccurate ✗</span>
+                    {% endif %}
+                </div>
+
+                <!-- GPS Evidence -->
+                <div class="flex items-center gap-3 text-xs font-bold text-gray-400 italic">
+                    <span class="material-symbols-outlined text-[18px]">location_on</span>
+                    {{ stop.gps_lat }}, {{ stop.gps_lng }} • Capturing from field device
+                </div>
+
+                <!-- Photo Grid -->
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Photos (3/3 Required)</p>
+                    <div class="grid grid-cols-3 gap-4">
+                        {% for url in stop.photo_urls %}
+                        <a href="{{ url }}" target="_blank" class="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition">
+                            <img src="{{ url }}" class="w-full h-full object-cover">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Video Payer -->
+                {% if stop.video_url %}
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Video (Vibe Proof)</p>
+                    <div class="w-full aspect-video rounded-3xl overflow-hidden shadow-2xl bg-black">
+                        <video src="{{ stop.video_url }}" class="w-full h-full" controls></video>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stop Notes -->
+                <div class="bg-gray-50 p-6 rounded-[24px]">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Field Notes</p>
+                    <p class="text-sm text-gray-700 leading-relaxed italic">"{{ stop.notes or 'No notes for this stop.' }}"</p>
+                    <div class="mt-4 flex gap-4">
+                        <div class="bg-white px-4 py-2 rounded-xl text-xs font-black uppercase border border-gray-100">
+                            Rating: {{ stop.rating }}/5
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stop Decoration -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#2D5A27] opacity-[0.02] rounded-full blur-2xl"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </main>
+
+    <footer class="py-12 px-10 text-center opacity-30 mt-auto">
+        <p class="text-[10px] font-black uppercase tracking-[0.3em]">&copy; Hidden SEA Admin Console • Approval Flow</p>
+    </footer>
+
+</body>
+</html>

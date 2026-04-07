@@ -1,4 +1,7 @@
 Flask
 python-dotenv
 google-generativeai
+requests
+beautifulsoup4
 gunicorn
+supabase

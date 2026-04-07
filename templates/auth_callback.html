@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authenticating... | Hidden SEA</title>
+    <link rel="icon" href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0b;
+            color: #f8f9fa;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 163, 115, 0.2);
+            border-top-color: #d4a373;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status { color: #adb5bd; font-size: 0.95rem; }
+        .error-msg { color: #ff6b6b; font-size: 0.9rem; display: none; }
+    </style>
+</head>
+<body>
+    <div class="spinner"></div>
+    <p class="status" id="status">Verifying your identity...</p>
+    <p class="error-msg" id="error"></p>
+
+    <script>
+        async function handleCallback() {
+            const hash = window.location.hash.substring(1);
+            // Remove tokens from URL immediately so they don't sit in browser history
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            const params = new URLSearchParams(hash);
+
+            const access_token = params.get('access_token');
+            const refresh_token = params.get('refresh_token');
+            const error = params.get('error_description') || params.get('error');
+
+            if (error) {
+                document.getElementById('status').style.display = 'none';
+                document.querySelector('.spinner').style.display = 'none';
+                const errEl = document.getElementById('error');
+                errEl.style.display = 'block';
+                errEl.textContent = `Authentication failed: ${error}`;
+                setTimeout(() => window.location.href = '/login?error=' + encodeURIComponent(error), 3000);
+                return;
+            }
+
+            if (!access_token) {
+                window.location.href = '/login?error=no_token';
+                return;
+            }
+
+            try {
+                const res = await fetch('/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token, refresh_token })
+                });
+                const data = await res.json();
+
+                if (data.status === 'ok') {
+                    document.getElementById('status').textContent = 'Success! Redirecting...';
+                    window.location.href = data.redirect || '/';
+                } else {
+                    window.location.href = '/login?error=' + encodeURIComponent(data.error || 'Session error');
+                }
+            } catch (err) {
+                window.location.href = '/login?error=network_error';
+            }
+        }
+
+        handleCallback();
+    </script>
+</body>
+</html>

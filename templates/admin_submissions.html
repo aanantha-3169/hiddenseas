@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Submissions | Hidden SEA Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>body { font-family: 'Outfit', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <header class="py-4 px-6 bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="/admin" class="flex items-center gap-2 group">
+                    <div class="w-8 h-8 bg-[#2D5A27] rounded-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-[16px]">waves</span>
+                    </div>
+                    <span class="font-black text-lg tracking-tighter uppercase">Hidden SEA</span>
+                </a>
+                <span class="text-gray-300">/</span>
+                <span class="font-bold text-gray-500 text-sm">Tour Submissions</span>
+            </div>
+            <a href="/logout" class="text-sm font-bold text-gray-400 hover:text-red-500 transition">Logout</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight mb-1">Tour Idea Submissions</h1>
+                <p class="text-gray-500 text-sm font-medium">Review and approve community-submitted tour ideas.</p>
+            </div>
+            <div class="flex gap-3">
+                {% set pending_count = submissions | selectattr('status', 'equalto', 'pending') | list | length %}
+                {% if pending_count > 0 %}
+                <span class="bg-amber-100 text-amber-800 text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest">
+                    {{ pending_count }} Pending
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex gap-2 mb-8" id="filter-tabs">
+            <button onclick="filterSubmissions('all')" class="filter-btn active px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-[#2D5A27] text-white transition" data-filter="all">All</button>
+            <button onclick="filterSubmissions('pending')" class="filter-btn px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-white border border-gray-200 text-gray-500 hover:border-[#2D5A27] hover:text-[#2D5A27] transition" data-filter="pending">Pending</button>
+            <button onclick="filterSubmissions('approved')" class="filter-btn px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-white border border-gray-200 text-gray-500 hover:border-green-600 hover:text-green-600 transition" data-filter="approved">Approved</button>
+            <button onclick="filterSubmissions('rejected')" class="filter-btn px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-white border border-gray-200 text-gray-500 hover:border-red-500 hover:text-red-500 transition" data-filter="rejected">Rejected</button>
+        </div>
+
+        {% if submissions %}
+        <div class="space-y-4" id="submissions-list">
+            {% for sub in submissions %}
+            <div class="submission-row bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition p-6" data-status="{{ sub.status }}">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+
+                    <!-- Status badge -->
+                    <div class="flex-shrink-0">
+                        {% if sub.status == 'approved' %}
+                        <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">check_circle</span> Approved
+                        </span>
+                        {% elif sub.status == 'rejected' %}
+                        <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">cancel</span> Rejected
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">hourglass_top</span> Pending
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Title + meta -->
+                    <div class="flex-grow min-w-0">
+                        <h3 class="font-black text-base tracking-tight truncate mb-0.5">{{ sub.title }}</h3>
+                        <div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                            {% if sub.location %}<span>{{ sub.location }}</span>{% endif %}
+                            {% if sub.submitter_name %}<span>· by {{ sub.submitter_name }}</span>{% endif %}
+                            {% if sub.submitted_at %}<span>· {{ sub.submitted_at[:10] }}</span>{% endif %}
+                        </div>
+                        {% if sub.description %}
+                        <p class="text-sm text-gray-500 mt-2 line-clamp-2">{{ sub.description }}</p>
+                        {% endif %}
+                        {% if sub.tags %}
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            {% for tag in sub.tags %}
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <a href="/admin/submission/{{ sub.id }}" class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">
+                            Review
+                            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </a>
+                        {% if sub.status == 'pending' %}
+                        <form action="/admin/submission/{{ sub.id }}/approve" method="POST" class="inline">
+                            <button type="submit" class="inline-flex items-center gap-1.5 bg-green-600 text-white hover:bg-green-700 transition text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl">
+                                <span class="material-symbols-outlined text-[14px]">check</span> Approve
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+            <span class="material-symbols-outlined text-gray-200 text-5xl mb-4 block">inbox</span>
+            <p class="font-black text-gray-400 uppercase tracking-widest text-xs">No submissions yet</p>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <script>
+        function filterSubmissions(filter) {
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.classList.add('bg-[#2D5A27]', 'text-white');
+                    btn.classList.remove('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+                } else {
+                    btn.classList.remove('bg-[#2D5A27]', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-500', 'border', 'border-gray-200');
+                }
+            });
+            // Show/hide rows
+            document.querySelectorAll('.submission-row').forEach(row => {
+                row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+            });
+        }
+    </script>
+
+</body>
+</html>

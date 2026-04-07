@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Viber | Hidden SEA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f0f7ef] min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="py-6 px-6 bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-[#2D5A27] rounded-full flex items-center justify-center transition group-hover:rotate-12">
+                    <span class="material-symbols-outlined text-white text-[16px]">waves</span>
+                </div>
+                <span class="font-black text-xl tracking-tighter uppercase">Hidden SEA</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="/" class="text-sm font-bold text-gray-500 hover:text-black">Cancel</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-6 py-16">
+        <div class="max-w-xl w-full">
+            <div class="bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gray-100 p-8 md:p-12">
+
+                {% if is_pending %}
+                <!-- Pending application state -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-amber-500 text-3xl">schedule</span>
+                    </div>
+                    <h1 class="text-3xl font-black mb-2">Application Pending</h1>
+                    <p class="text-gray-500 mb-8 leading-relaxed">
+                        Your Viber application is under review. We'll reach out at
+                        <span class="font-bold text-gray-700">{{ session.user.email }}</span>
+                        within 24–48 hours once you're approved.
+                    </p>
+                    <a href="/" class="block w-full bg-[#2D5A27] text-white py-5 rounded-[24px] font-black uppercase tracking-widest hover:bg-[#234a1e] transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        Back to Explorations
+                    </a>
+                    <div class="mt-8 pt-8 border-t border-gray-100">
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Questions?</p>
+                        <a href="mailto:vibers@hiddensea.com" class="text-sm font-bold text-[#2D5A27] hover:underline mt-2 inline-block">vibers@hiddensea.com</a>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- Application form -->
+                <div class="text-center mb-10">
+                    <div class="w-16 h-16 bg-[#f0f7ef] rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-[#2D5A27] text-3xl">verified_user</span>
+                    </div>
+                    <h1 class="text-3xl font-black mb-2">Become a Viber</h1>
+                    {% if from_board %}
+                    <p class="text-gray-500">The Bounty Board is for approved Vibers. Apply below to get access.</p>
+                    {% else %}
+                    <p class="text-gray-500">Walk tours, verify history, and earn GoPay bounties.</p>
+                    {% endif %}
+                </div>
+
+                {% if from_board %}
+                <div class="bg-amber-50 border border-amber-100 text-amber-800 px-4 py-3 rounded-2xl text-sm mb-6 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-500 text-[18px] mt-0.5 flex-shrink-0">lock</span>
+                    <span>You need to be an approved Viber to access the Bounty Board. Complete the form below to apply.</span>
+                </div>
+                {% endif %}
+
+                {% if error %}
+                <div class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-sm mb-8 text-center">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form action="/become-viber" method="POST" class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Display Handle</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">@</span>
+                            <input type="text" name="handle" value="{{ session.user.handle }}" required
+                                class="w-full pl-8 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2D5A27]/20 focus:border-[#2D5A27] transition font-bold"
+                                placeholder="your_name">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Bio / Experience</label>
+                        <textarea name="bio" required rows="3"
+                            class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2D5A27]/20 focus:border-[#2D5A27] transition font-medium"
+                            placeholder="Tell us why you'd be a great Viber! Do you live in Bali? Are you a history buff?"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">GoPay Phone Number</label>
+                        <input type="tel" name="gopay_number" required
+                            class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#2D5A27]/20 focus:border-[#2D5A27] transition font-bold"
+                            placeholder="0812XXXXXXXX">
+                        <p class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Payouts are sent manually to this number.</p>
+                    </div>
+
+                    <div class="pt-4">
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <input type="checkbox" required class="mt-1 w-5 h-5 rounded border-gray-300 text-[#2D5A27] focus:ring-[#2D5A27]">
+                            <span class="text-xs text-gray-500 leading-relaxed font-medium transition group-hover:text-gray-700">
+                                I grant Hidden SEA full commercial rights to photo and video content submitted during Vibe Checks. Full Viber Terms coming soon.
+                            </span>
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-[#2D5A27] text-white py-5 rounded-[24px] font-black uppercase tracking-widest hover:bg-[#234a1e] transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        Submit Application
+                    </button>
+                </form>
+                {% endif %}
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 px-6 text-center">
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">&copy; 2026 Hidden SEA. Build with Truth.</p>
+    </footer>
+
+</body>
+</html>

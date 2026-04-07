@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ sub.title }} | Submission Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>body { font-family: 'Outfit', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <header class="py-4 px-6 bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="/admin/submissions" class="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-black transition">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Submissions
+                </a>
+                <span class="text-gray-300">/</span>
+                <span class="font-bold text-gray-700 text-sm truncate max-w-xs">{{ sub.title }}</span>
+            </div>
+            <a href="/logout" class="text-sm font-bold text-gray-400 hover:text-red-500 transition">Logout</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-12">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
+            <div>
+                <div class="flex items-center gap-3 mb-3">
+                    {% if sub.status == 'approved' %}
+                    <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                        <span class="material-symbols-outlined text-[14px]">check_circle</span> Approved
+                    </span>
+                    {% elif sub.status == 'rejected' %}
+                    <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                        <span class="material-symbols-outlined text-[14px]">cancel</span> Rejected
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                        <span class="material-symbols-outlined text-[14px]">hourglass_top</span> Pending Review
+                    </span>
+                    {% endif %}
+                </div>
+                <h1 class="text-3xl font-black tracking-tight mb-2">{{ sub.title }}</h1>
+                <div class="flex flex-wrap gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    {% if sub.location %}<span>{{ sub.location }}</span>{% endif %}
+                    {% if sub.submitter_name %}<span>· {{ sub.submitter_name }}{% if sub.submitter_email %} ({{ sub.submitter_email }}){% endif %}</span>{% endif %}
+                    {% if sub.submitted_at %}<span>· Submitted {{ sub.submitted_at[:10] }}</span>{% endif %}
+                </div>
+            </div>
+
+            {% if sub.status == 'pending' %}
+            <div class="flex gap-3 flex-shrink-0">
+                <form action="/admin/submission/{{ sub.id }}/approve" method="POST">
+                    <button type="submit" class="flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition font-black uppercase tracking-widest text-sm px-6 py-3 rounded-2xl shadow-md">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        Approve
+                    </button>
+                </form>
+                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')"
+                    class="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition font-black uppercase tracking-widest text-sm px-6 py-3 rounded-2xl">
+                    <span class="material-symbols-outlined text-[18px]">cancel</span>
+                    Reject
+                </button>
+            </div>
+            {% elif sub.status == 'approved' and sub.reviewed_at %}
+            <div class="text-right text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <p>Approved</p>
+                <p class="text-black">{{ sub.reviewed_at[:10] }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- Left: Tour details -->
+            <div class="md:col-span-2 space-y-6">
+
+                <!-- Description -->
+                {% if sub.description %}
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Description</h2>
+                    <p class="text-gray-700 leading-relaxed text-sm">{{ sub.description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Narrative -->
+                {% if sub.narrative %}
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">AI Narrative</h2>
+                    <div class="text-gray-700 leading-relaxed text-sm whitespace-pre-line max-h-80 overflow-y-auto">{{ sub.narrative }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Stops -->
+                {% if sub.stops %}
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
+                        Stops ({{ sub.stops | length }})
+                    </h2>
+                    <div class="space-y-3">
+                        {% for stop in sub.stops %}
+                        <div class="flex gap-4 items-start py-3 border-b border-gray-50 last:border-0">
+                            <div class="w-8 h-8 rounded-full bg-[#2D5A27] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                                {{ loop.index }}
+                            </div>
+                            <div class="flex-grow min-w-0">
+                                <p class="font-black text-sm">{{ stop.name or stop.get('title', 'Stop ' + loop.index|string) }}</p>
+                                {% if stop.description %}
+                                <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ stop.description }}</p>
+                                {% endif %}
+                                {% if stop.lat and stop.lng %}
+                                <p class="text-[10px] text-gray-400 font-bold mt-1">{{ stop.lat }}, {{ stop.lng }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Admin notes if rejected -->
+                {% if sub.admin_notes %}
+                <div class="bg-red-50 rounded-2xl border border-red-100 p-6">
+                    <h2 class="text-xs font-black text-red-400 uppercase tracking-widest mb-2">Rejection Notes</h2>
+                    <p class="text-red-700 text-sm">{{ sub.admin_notes }}</p>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Right: Metadata -->
+            <div class="space-y-6">
+
+                <!-- Tags -->
+                {% if sub.tags %}
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Tags</h2>
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in sub.tags %}
+                        <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full">#{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Submitter info -->
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Submitted By</h2>
+                    <p class="font-bold text-sm text-gray-800">{{ sub.submitter_name or 'Anonymous' }}</p>
+                    {% if sub.submitter_email %}
+                    <p class="text-xs text-gray-400 mt-1">{{ sub.submitter_email }}</p>
+                    {% endif %}
+                    {% if sub.submitted_at %}
+                    <p class="text-xs text-gray-400 mt-2 font-bold">{{ sub.submitted_at[:16].replace('T', ' ') }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Preview link -->
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Preview</h2>
+                    <a href="/tour/generated/{{ sub.temp_tour_id }}" target="_blank"
+                        class="flex items-center gap-2 text-[#2D5A27] font-bold text-sm hover:underline">
+                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                        View Generated Tour
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Reject Modal -->
+    <div id="reject-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+            <h3 class="text-xl font-black mb-2">Reject Submission</h3>
+            <p class="text-gray-500 text-sm mb-6">Optionally add notes explaining why this tour wasn't approved.</p>
+            <form action="/admin/submission/{{ sub.id }}/reject" method="POST">
+                <textarea name="notes" rows="4"
+                    placeholder="e.g. Stops are inaccurate for the area, or the route is too dangerous..."
+                    class="w-full border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-300 resize-none mb-4"></textarea>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-sm hover:bg-red-700 transition">
+                        Confirm Reject
+                    </button>
+                    <button type="button" onclick="document.getElementById('reject-modal').classList.add('hidden')"
+                        class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black uppercase tracking-widest text-sm hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

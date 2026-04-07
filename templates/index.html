@@ -2,115 +2,365 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="/static/images/favicon.png">
-    <title>Hidden SEA - Jakarta Audio Walking Tours</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4W77EZBPTD"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-4W77EZBPTD');
+    </script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hidden SEA - Travel Differently</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="icon" type="image/png"
+        href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes float-delayed {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+            animation: float-delayed 3.5s ease-in-out 0.5s infinite;
+        }
+
+        .pill-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pill-hover:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+    </style>
 </head>
 
-<body
-    class="bg-gray-950 text-white font-sans antialiased min-h-screen relative selection:bg-cyan-500 selection:text-white">
-    <!-- Background Image -->
-    <div class="fixed inset-0 z-0">
-        <img src="/static/images/jakarta_bg.png" alt="Jakarta Landscape" class="w-full h-full object-cover">
-        <div class="absolute inset-0 bg-gray-950/70 backdrop-blur-[2px]"></div>
-    </div>
+<body class="bg-white text-gray-900">
 
-    <div class="relative z-10 max-w-4xl mx-auto min-h-screen flex flex-col p-6">
-
-        <!-- Hero Section -->
-        <header class="mb-12 mt-8 text-center space-y-4">
-            <h1
-                class="text-5xl md:text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 animate-gradient drop-shadow-md">
-                Hidden SEA</h1>
-            <p class="text-xl text-gray-300 max-w-2xl mx-auto font-light">
-                Discover the unseen stories of Southeast Asia.
-                <span class="block text-gray-400 text-base mt-2">
-                    Build and share bespoke audio tours powered by AI. Experience the city through the ears of locals,
-                    ghosts, and rebels.
-                </span>
-            </p>
-        </header>
-
-        <!-- Location Tabs -->
-        <div class="flex justify-center gap-4 mb-8 overflow-x-auto pb-2">
-            <button
-                class="px-6 py-2 rounded-full bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 transition border border-indigo-400/30">
-                Indonesia
-            </button>
-            <button
-                class="px-6 py-2 rounded-full bg-white/5 backdrop-blur-sm text-gray-400 cursor-not-allowed border border-white/10"
-                title="Coming Soon">
-                Thailand
-            </button>
-            <button
-                class="px-6 py-2 rounded-full bg-white/5 backdrop-blur-sm text-gray-400 cursor-not-allowed border border-white/10"
-                title="Coming Soon">
-                Vietnam
-            </button>
-            <button
-                class="px-6 py-2 rounded-full bg-white/5 backdrop-blur-sm text-gray-400 cursor-not-allowed border border-white/10"
-                title="Coming Soon">
-                Singapore
-            </button>
+    <!-- Header / Navigation -->
+    <header class="bg-[#2D5A27] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-[#2D5A27] text-sm">waves</span>
+            </div>
+            <span class="font-bold text-lg tracking-tight">Hidden SEA</span>
         </div>
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+            <a class="hover:opacity-80 transition" href="#">Destinations</a>
+            <a class="hover:opacity-80 transition" href="#">Tours</a>
+            <a class="hover:opacity-80 transition" href="#">About</a>
+        </nav>
+        <div class="flex items-center gap-4 text-sm font-medium">
+            {% if user %}
+            <div class="flex items-center gap-3 bg-white px-3 py-1.5 rounded-full border border-white/40 shadow-sm">
+                {% if user.picture %}
+                <img src="{{ user.picture }}" class="w-6 h-6 rounded-full object-cover border border-gray-200" alt="User">
+                {% endif %}
+                <span class="text-xs font-bold text-[#2D5A27]">{{ user.name }}</span>
+                <a class="text-[10px] font-semibold text-gray-400 hover:text-red-500 transition uppercase tracking-tighter" href="/logout">Logout</a>
+            </div>
+            {% else %}
+            <a class="hover:opacity-80 transition hidden sm:inline" href="/login">Log in</a>
+            {% endif %}
+            <a class="hover:opacity-80 transition hidden sm:inline" href="/create-tour">Create</a>
+            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get started</button>
+        </div>
+    </header>
 
-        <!-- City: Jakarta -->
-        <div class="mb-12">
-            <h2
-                class="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white border-b border-white/10 pb-2 inline-block">
-                Jakarta, ID</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% for id, tour in tours.items() %}
-                <a href="/tour/{{ id }}"
-                    class="group relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 hover:border-white/20 transition hover:-translate-y-1 duration-300 backdrop-blur-sm shadow-xl">
+    <!-- Hero Section -->
+    <section class="bg-[#2D5A27] text-white px-6 pt-12 pb-0 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 z-10">
+                <h1 class="text-6xl md:text-8xl font-extrabold leading-[0.9] mb-6">
+                    Travel<br />differently.
+                </h1>
+                <p class="text-sm md:text-base max-w-sm mb-8 leading-relaxed opacity-90">
+                    Hidden SEA brings you immersive audio tours powered by AI. Experience Southeast Asia through the
+                    ears of locals, ghosts, and rebels.
+                </p>
+                <div class="flex items-center gap-6 mb-12">
+                    <a href="#tours"
+                        class="bg-white text-[#2D5A27] px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition inline-block">Explore</a>
+                </div>
+            </div>
+            <div class="md:w-1/2 relative">
+                <!-- Hero Image — replace by swapping /static/images/hero_street.png -->
+                <div class="relative w-full aspect-square md:aspect-[4/3]">
+                    <img alt="Southeast Asian street scene" class="w-full h-full object-cover rounded-tl-[80px]"
+                        src="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/hero_street.png" />
+                    <!-- Audio Player Overlay -->
                     <div
-                        class="absolute inset-0 bg-gradient-to-br {{ tour.vibe }} opacity-20 group-hover:opacity-30 transition duration-500">
-                    </div>
-                    <div class="p-8 relative z-10 flex flex-col h-full">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-[10px] font-bold tracking-widest text-cyan-300 uppercase">Audio
-                                Tour</span>
-                            {% if tour.is_vetted %}
-                            <span
-                                class="flex items-center gap-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-medium border border-green-500/30">
-                                <span>✨ Vetted</span>
-                                <span class="text-white/60">|</span>
-                                <span>★ {{ tour.rating }}</span>
-                            </span>
-                            {% endif %}
+                        class="absolute top-10 right-10 w-48 bg-white/90 backdrop-blur p-3 rounded-xl shadow-lg border border-white/20 text-gray-900 animate-float">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 bg-green-600 rounded-lg flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white text-[14px]">headphones</span>
+                            </div>
+                            <span class="text-[11px] font-bold">Audio Tour</span>
                         </div>
-                        <h3
-                            class="text-2xl font-bold mb-2 leading-tight group-hover:text-cyan-200 transition text-white">
-                            {{ tour.title }}</h3>
-                        <p class="text-sm text-gray-300 leading-relaxed">{{ tour.description }}</p>
+                        <div class="h-1.5 w-full bg-gray-200 rounded-full mb-1">
+                            <div class="h-full w-1/3 bg-green-700 rounded-full transition-all duration-1000"></div>
+                        </div>
+                        <div class="flex justify-between text-[9px] font-medium text-gray-500">
+                            <span>0:45</span>
+                            <span>2:30</span>
+                        </div>
+                    </div>
+                    <!-- Guide Avatar Overlay -->
+                    <div class="absolute bottom-32 right-12 flex flex-col gap-2 text-gray-900 animate-float-delayed">
+                        <div class="w-14 h-14 rounded-full border-4 border-[#2D5A27] overflow-hidden shadow-xl">
+                            <!-- Replace: swap /static/images/traveler_portrait.png -->
+                            <img alt="Guide" class="w-full h-full object-cover"
+                                src="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/traveler_portrait.png" />
+                        </div>
                         <div
-                            class="mt-auto pt-6 flex items-center text-sm font-semibold text-gray-400 group-hover:text-white transition">
-                            Start Tour <span
-                                class="ml-2 transition-transform group-hover:translate-x-1 text-cyan-400">&rarr;</span>
+                            class="bg-white/90 backdrop-blur p-2 rounded-xl shadow-lg border border-white/20 flex flex-col gap-1 w-32">
+                            <div class="h-2 w-full bg-gray-200 rounded-full"></div>
+                            <div class="h-2 w-2/3 bg-gray-100 rounded-full"></div>
+                            <div class="flex justify-between items-center mt-1">
+                                <div class="flex -space-x-1">
+                                    <div class="w-4 h-4 rounded-full bg-green-300 border border-white"></div>
+                                    <div class="w-4 h-4 rounded-full bg-green-400 border border-white"></div>
+                                </div>
+                                <span class="text-[8px] font-bold"><span
+                                        class="material-symbols-outlined text-[12px]">photo_camera</span></span>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create Your Own Section -->
+    <section class="py-24 px-6 bg-white overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-center mb-20">Create your own</h2>
+            <div class="flex flex-col md:flex-row items-center gap-16">
+                <!-- Left Side: Copy -->
+                <div class="md:w-5/12">
+                    <h3 class="text-3xl font-bold mb-6">Start chatting with us.</h3>
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        Ask us for suggestions for any destination or ask us for an entire itinerary. Be as specific as
+                        you can about the types of experiences that you like or take our quiz to determine your travel
+                        style.
+                    </p>
+                    <a href="/create-tour"
+                        class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-6 py-3 rounded-full font-bold hover:bg-[#234a1e] transition">
+                        Build a Tour <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </a>
+                </div>
+                <!-- Right Side: Interactive Visual -->
+                <div class="md:w-7/12 relative h-[400px]">
+                    <!-- Central Portrait — replace by swapping /static/images/traveler_portrait.png -->
+                    <div
+                        class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 rounded-full border-[10px] border-[#2D5A27] overflow-hidden shadow-2xl z-10">
+                        <img alt="Traveler" class="w-full h-full object-cover"
+                            src="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/traveler_portrait.png" />
+                    </div>
+                    <!-- Floating Interest Tags -->
+                    <div
+                        class="absolute top-[10%] left-[55%] bg-white px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 pill-hover cursor-default animate-float">
+                        <span>🍜</span> <span class="text-sm font-semibold">Street Food</span>
+                    </div>
+                    <div
+                        class="absolute top-[15%] left-[10%] bg-white px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 pill-hover cursor-default animate-float-delayed">
+                        <span>👻</span> <span class="text-sm font-semibold">Urban Legends</span>
+                    </div>
+                    <div
+                        class="absolute top-[35%] right-[5%] bg-white px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 pill-hover cursor-default animate-float">
+                        <span>🙏</span> <span class="text-sm font-semibold">Temples &amp; Shrines</span>
+                    </div>
+                    <div
+                        class="absolute bottom-[40%] left-[5%] bg-white px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 pill-hover cursor-default animate-float-delayed">
+                        <span>🏮</span> <span class="text-sm font-semibold">Night Markets</span>
+                    </div>
+                    <div
+                        class="absolute bottom-[20%] right-[10%] bg-white px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 pill-hover cursor-default animate-float">
+                        <span>🎨</span> <span class="text-sm font-semibold">Art &amp; Culture</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Available Tours Section -->
+    <section id="tours" class="py-24 px-6 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold">available tours</h2>
+                <a href="/create-tour"
+                    class="hidden md:inline-flex items-center gap-1 text-sm font-bold text-[#2D5A27] hover:underline">
+                    Create your own <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {% for id, tour in tours.items() %}
+                <a href="/tour/{{ id }}" class="group cursor-pointer block">
+                    <div class="aspect-[4/3] rounded-2xl overflow-hidden mb-6 relative">
+                        <!-- Tour image — replace by updating the 'image' field in data.py or swapping files in /static/images/ -->
+                        <img alt="{{ tour.title }}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                            src="{{ tour.get('image', 'https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/tour_jakarta.png') }}" />
+                        {% if not tour.is_vetted %}
+                        <div
+                            class="absolute top-3 right-3 bg-amber-500/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                            AI Generated
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="text-xl font-extrabold mb-1 group-hover:text-[#2D5A27] transition">{{ tour.title }}</h4>
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                        {% if tour.is_vetted %}
+                        <span>Vetted</span>
+                        <span>|</span>
+                        {% endif %}
+                        {% if tour.rating > 0 %}
+                        <div class="flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[14px] fill-black text-black"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>{{ tour.rating }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ tour.description }}</p>
+                    <span class="inline-flex items-center gap-1 font-bold text-sm group-hover:underline text-[#2D5A27]">
+                        Start Tour <span
+                            class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+                    </span>
                 </a>
                 {% endfor %}
             </div>
         </div>
+    </section>
 
-        <!-- Contribution Call to Action -->
-        <div class="mt-auto pt-16 pb-8 text-center border-t border-white/10">
-            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
-                <h3 class="text-xl font-bold mb-2 text-white">Know a hidden story?</h3>
-                <p class="text-gray-400 mb-6 text-sm">Contribute your own bespoke AI tour ideas. Help us map the
-                    invisible history of Southeast Asia.</p>
-                <div
-                    class="inline-flex items-center px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold cursor-not-allowed transition transform hover:scale-105">
-                    Submit Your Tour Idea (Coming Soon)
+    <!-- Vibe Check Section -->
+    <section class="py-24 px-6 bg-[#f0f7ef]">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center gap-16">
+                <!-- Left Side: Explanation -->
+                <div class="md:w-1/2">
+                    <div
+                        class="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-2 rounded-full text-sm font-bold mb-6">
+                        <span class="material-symbols-outlined text-[18px]">verified</span>
+                        Vibe Check
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">Every tour gets walked<br /><span class="text-[#2D5A27]">before it gets worn.</span></h2>
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        Our AI identifies incredible hidden histories — but we don't stop there. Our <strong>Vibers</strong> — local explorers and history nerds — physically walk every path to verify the vibes, timestamps, and accuracy.
+                    </p>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-8">
+                        Tours that haven't been checked yet are marked as <span
+                            class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">AI
+                            Generated</span>. Once a Viber documents the route, it earns the <span
+                            class="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">✨
+                            Vibe Checked</span> badge.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="/become-viber" class="bg-[#2D5A27] text-white px-8 py-3 rounded-full font-bold hover:bg-[#234a1e] transition shadow-md">Become a Viber</a>
+                        <a href="/vibe" class="bg-white border-2 border-[#2D5A27] text-[#2D5A27] px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition">View Bounty Board</a>
+                    </div>
+                </div>
+                <!-- Right Side: Steps -->
+                <div class="md:w-1/2">
+                    <div class="bg-white p-8 md:p-10 rounded-[32px] shadow-xl border border-gray-100 relative overflow-hidden">
+                        <div class="space-y-10 relative z-10">
+                            <!-- Step 1 -->
+                            <div class="flex items-start gap-6 group">
+                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">1</div>
+                                <div>
+                                    <h4 class="font-extrabold text-xl mb-1">Claim a Bounty</h4>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Pick an unvetted tour from the bounty board. Bounties start at <strong>IDR 100k</strong> for local tours.</p>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="flex items-start gap-6 group">
+                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">2</div>
+                                <div>
+                                    <h4 class="font-extrabold text-xl mb-1">Walk & Document</h4>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Visit every stop. Take <strong>3 photos & 1 video</strong> per location to verify the current status and atmosphere.</p>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="flex items-start gap-6 group">
+                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">3</div>
+                                <div>
+                                    <h4 class="font-extrabold text-xl mb-1">Get Paid via GoPay</h4>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Once vetted, your bounty is sent instantly via GoPay. You get the credit and Hidden SEA stays truthful.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Background Glow Decoration -->
+                        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-[#2D5A27] opacity-[0.03] rounded-full blur-3xl"></div>
+                    </div>
                 </div>
             </div>
-            <p class="text-gray-600 text-xs mt-8">&copy; 2026 Hidden SEA. Built with Gemini.</p>
         </div>
+    </section>
 
-    </div>
+    <!-- Contribution CTA -->
+    <section class="py-20 px-6 bg-white">
+        <div class="max-w-3xl mx-auto text-center">
+            <h3 class="text-3xl font-extrabold mb-4">Know a hidden story?</h3>
+            <p class="text-gray-600 mb-8">Contribute your own bespoke AI tour ideas. Help us map the invisible history
+                of Southeast Asia.</p>
+            <a href="/create-tour"
+                class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-8 py-4 rounded-full font-bold hover:bg-[#234a1e] transition transform hover:scale-105 shadow-lg">
+                Submit Your Tour Idea <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-gray-100">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-[#2D5A27] rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-[10px]">waves</span>
+                </div>
+                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA. Built with Gemini.</p>
+            </div>
+            <nav class="flex gap-8 text-xs font-bold text-gray-600 uppercase tracking-widest">
+                <a class="hover:text-black transition" href="#">Home</a>
+                <a class="hover:text-black transition" href="#">About</a>
+                <a class="hover:text-black transition" href="#">Privacy</a>
+                <a class="hover:text-black transition" href="#">Log on</a>
+            </nav>
+        </div>
+    </footer>
+
 </body>
 
 </html>

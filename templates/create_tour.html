@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4W77EZBPTD"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-4W77EZBPTD');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Your Tour - Hidden SEA</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="icon" type="image/png"
+        href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .step-panel {
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+
+        .step-panel.hidden-step {
+            display: none;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(45, 90, 39, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(45, 90, 39, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(45, 90, 39, 0);
+            }
+        }
+
+        .step-active-pulse {
+            animation: pulse-ring 2s infinite;
+        }
+
+        .tag-chip {
+            transition: all 0.2s ease;
+        }
+
+        .tag-chip.selected {
+            background: #2D5A27;
+            border-color: #2D5A27;
+            color: white;
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+        }
+
+        .toast-enter {
+            animation: toast-in 0.35s ease-out forwards;
+        }
+
+        @keyframes typing-dot {
+
+            0%,
+            60%,
+            100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-4px);
+            }
+        }
+
+        .typing-dot {
+            animation: typing-dot 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+
+        .stop-pill {
+            background: #2D5A27;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 11px;
+            border: 2px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-[#F9FAF9] text-gray-900 min-h-screen">
+    <!-- Header / Navigation -->
+    <header class="bg-[#2D5A27] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-md">
+        <a href="/" class="flex items-center gap-2 group">
+            <div
+                class="w-8 h-8 bg-white rounded-full flex items-center justify-center group-hover:scale-105 transition">
+                <span class="material-symbols-outlined text-[#2D5A27] text-[20px]">explore</span>
+            </div>
+            <h1 class="text-xl font-extrabold tracking-tight">Hidden SEA</h1>
+        </a>
+        <nav class="hidden md:flex items-center gap-6">
+            <a href="/" class="text-sm font-bold hover:text-emerald-200 transition">Explore</a>
+            <a href="/create-tour" class="text-sm font-bold border-b-2 border-white pb-0.5">Create Tour</a>
+        </nav>
+        <button class="material-symbols-outlined p-2 hover:bg-white/10 rounded-full transition">more_vert</button>
+    </header>
+
+    <div class="max-w-3xl mx-auto min-h-[calc(100vh-70px)] flex flex-col p-6 pt-10">
+        <!-- Title Section -->
+        <div class="text-center mb-10">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-[#2D5A27] tracking-tight mb-3">Create Your Bespoke Tour
+            </h2>
+            <p class="text-gray-500 max-w-lg mx-auto text-sm md:text-base">
+                Tell us where you want to explore and what vibes you're after. Our AI will craft an original narrative
+                and map the perfect route for you.
+            </p>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="flex items-center justify-center mb-12" id="step-indicator">
+            <div class="flex flex-col items-center gap-2">
+                <div id="indicator-1"
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-[#2D5A27] text-white step-active-pulse transition-all">
+                    1
+                </div>
+                <span id="label-1"
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-[#2D5A27]">Location</span>
+            </div>
+            <div class="w-12 h-0.5 bg-gray-200 mx-4 -mt-6"></div>
+            <div class="flex flex-col items-center gap-2">
+                <div id="indicator-2"
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-500 transition-all">
+                    2
+                </div>
+                <span id="label-2"
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Themes</span>
+            </div>
+            <div class="w-12 h-0.5 bg-gray-200 mx-4 -mt-6"></div>
+            <div class="flex flex-col items-center gap-2">
+                <div id="indicator-3"
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-500 transition-all">
+                    3
+                </div>
+                <span id="label-3"
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Generate</span>
+            </div>
+        </div>
+
+        <!-- ===== STEP 1: Location Input ===== -->
+        <div id="step-1" class="step-panel flex-grow">
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#2D5A27]">location_on</span>
+                    Where should we walk?
+                </h3>
+                <p class="text-gray-500 text-sm mb-6">Enter a neighborhood, district, or specific area in Jakarta.</p>
+
+                <div class="space-y-6">
+                    <div class="relative group">
+                        <input id="location-input" type="text" placeholder="e.g. Kota Tua, Benhil, Menteng, Kemang..."
+                            class="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2D5A27]/20 focus:border-[#2D5A27] transition text-sm font-medium"
+                            oninput="validateLocation()">
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-3">Popular
+                            Districts</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="pickLocation('Kota Tua (Old Batavia)')"
+                                class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-[#2D5A27] hover:text-[#2D5A27] transition shadow-sm">Kota
+                                Tua</button>
+                            <button onclick="pickLocation('Menteng')"
+                                class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-[#2D5A27] hover:text-[#2D5A27] transition shadow-sm">Menteng</button>
+                            <button onclick="pickLocation('Glodok (Chinatown)')"
+                                class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-[#2D5A27] hover:text-[#2D5A27] transition shadow-sm">Glodok</button>
+                            <button onclick="pickLocation('Kemang, South Jakarta')"
+                                class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-[#2D5A27] hover:text-[#2D5A27] transition shadow-sm">Kemang</button>
+                            <button onclick="pickLocation('Senopati & SCBD')"
+                                class="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-[#2D5A27] hover:text-[#2D5A27] transition shadow-sm">Senopati</button>
+                        </div>
+                    </div>
+
+                    <button id="location-next-btn" onclick="goToStep(2)"
+                        class="w-full py-4 rounded-2xl bg-[#2D5A27] hover:bg-[#234a1e] text-white font-extrabold transition transform hover:scale-[1.01] shadow-lg shadow-green-900/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        disabled>
+                        Continue to Themes
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STEP 2: Themes Input ===== -->
+        <div id="step-2" class="step-panel hidden-step flex-grow">
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <button onclick="goToStep(1)"
+                    class="text-gray-400 text-xs font-bold mb-6 flex items-center gap-1 hover:text-[#2D5A27] transition">
+                    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Location
+                </button>
+
+                <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#2D5A27]">vibration</span>
+                    What's the vibe?
+                </h3>
+                <p class="text-gray-500 text-sm mb-6">Pick up to 3 themes to shape the narrative and stops.</p>
+
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex flex-wrap gap-2" id="tag-chips">
+                            <button onclick="toggleTag(this, 'Colonial history')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Colonial
+                                History</button>
+                            <button onclick="toggleTag(this, 'Street food')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Street
+                                Food</button>
+                            <button onclick="toggleTag(this, 'Hidden temples')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Hidden
+                                Temples</button>
+                            <button onclick="toggleTag(this, 'Architecture')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Architecture</button>
+                            <button onclick="toggleTag(this, 'Punk scene')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Punk
+                                Scene</button>
+                            <button onclick="toggleTag(this, 'Religious harmony')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Religious
+                                Harmony</button>
+                            <button onclick="toggleTag(this, 'Underground')"
+                                class="tag-chip px-4 py-2.5 rounded-xl text-xs font-bold bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#2D5A27] transition">Underground</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-2">Or add your
+                            own</p>
+                        <div class="flex gap-2">
+                            <input id="custom-tag-input" type="text" placeholder="e.g. coffee culture"
+                                class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#2D5A27] transition text-sm font-medium"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomTag()}">
+                            <button onclick="addCustomTag()"
+                                class="px-6 py-3 rounded-xl bg-[#2D5A27]/10 text-[#2D5A27] text-sm font-bold hover:bg-[#2D5A27]/20 transition">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="selected-tags-display" class="hidden">
+                        <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider mb-2">Your selection
+                            <span id="tag-count" class="text-[#2D5A27]">(0/3)</span>
+                        </p>
+                        <div id="selected-tags-list" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <button id="tags-next-btn" onclick="goToStep(3)"
+                        class="w-full py-4 rounded-2xl bg-[#2D5A27] hover:bg-[#234a1e] text-white font-extrabold transition transform hover:scale-[1.01] shadow-lg shadow-green-900/10 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        disabled>
+                        Generate Tour Now
+                        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STEP 3: Generating State ===== -->
+        <div id="step-3" class="step-panel hidden-step flex-grow">
+            <div id="generating-state" class="bg-white rounded-3xl p-10 shadow-sm border border-gray-100 text-center">
+                <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-[#2D5A27] text-[40px] animate-pulse">auto_awesome</span>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Drafting Your Journey</h3>
+                <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+                    Connecting historical dots and mapping the streets of <span id="gen-location"
+                        class="text-[#2D5A27] font-bold"></span>
+                    with a focus on <span id="gen-tags" class="text-[#2D5A27] font-bold"></span>.
+                </p>
+
+                <div class="space-y-4 text-left max-w-xs mx-auto mb-8">
+                    <div id="progress-research" class="flex items-center gap-3 text-sm font-bold text-gray-300">
+                        <span class="material-symbols-outlined text-[18px]">search</span>
+                        <span>Researching locations...</span>
+                    </div>
+                    <div id="progress-narrative" class="flex items-center gap-3 text-sm font-bold text-gray-300">
+                        <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                        <span>Writing narrative...</span>
+                    </div>
+                    <div id="progress-stops" class="flex items-center gap-3 text-sm font-bold text-gray-300">
+                        <span class="material-symbols-outlined text-[18px]">route</span>
+                        <span>Finalizing route...</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center gap-1.5">
+                    <span class="typing-dot w-2 h-2 bg-[#2D5A27] rounded-full"></span>
+                    <span class="typing-dot w-2 h-2 bg-[#2D5A27] rounded-full"></span>
+                    <span class="typing-dot w-2 h-2 bg-[#2D5A27] rounded-full"></span>
+                </div>
+            </div>
+
+            <!-- Success state -->
+            <div id="success-state" class="hidden">
+                <div class="bg-white rounded-3xl p-8 shadow-md border border-gray-100 text-center">
+                    <div class="w-16 h-16 mx-auto rounded-full bg-emerald-50 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-[#2D5A27] text-[32px]">check_circle</span>
+                    </div>
+                    <h3 id="success-title" class="text-2xl font-bold text-gray-900 mb-2">Tour Ready!</h3>
+                    <p id="success-preview" class="text-gray-500 text-sm mb-6"></p>
+
+                    <!-- Preview Map -->
+                    <div id="success-map"
+                        class="w-full h-56 rounded-2xl overflow-hidden border border-gray-100 shadow-inner mb-8 bg-gray-50 relative z-10">
+                    </div>
+
+                    <a id="success-link" href="#"
+                        class="w-full py-4 rounded-2xl bg-[#2D5A27] hover:bg-[#234a1e] text-white font-extrabold transition transform hover:scale-[1.01] shadow-lg flex items-center justify-center gap-2">
+                        View Your Tour
+                        <span class="material-symbols-outlined text-[18px]">explore</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error state -->
+            <div id="error-state" class="hidden bg-white rounded-3xl p-10 shadow-sm border border-red-50 text-center">
+                <span class="material-symbols-outlined text-red-400 text-[48px] mb-4">error</span>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Something Went Wrong</h3>
+                <p id="error-message" class="text-gray-500 text-sm mb-8"></p>
+                <button onclick="goToStep(2)"
+                    class="px-8 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition">Try
+                    Again</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-auto py-8">
+            <p class="text-gray-400 text-[10px] text-center uppercase tracking-widest">&copy; 2026 Hidden SEA &bull; AI
+                Powered Exploration</p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[2000] pointer-events-none"></div>
+
+    <script>
+        // State
+        let currentStep = 1;
+        let selectedLocation = '';
+        let selectedTags = [];
+
+        // ── Location Logic ──
+        function pickLocation(loc) {
+            const input = document.getElementById('location-input');
+            input.value = loc;
+            input.dispatchEvent(new Event('input'));
+            validateLocation();
+        }
+
+        function validateLocation() {
+            const val = document.getElementById('location-input').value.trim();
+            selectedLocation = val;
+            document.getElementById('location-next-btn').disabled = val.length < 3;
+        }
+
+        // ── Theme Tags ──
+        function toggleTag(btn, tag) {
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+                btn.classList.remove('selected');
+            } else if (selectedTags.length < 3) {
+                selectedTags.push(tag);
+                btn.classList.add('selected');
+            } else {
+                showToast('Maximum 3 themes allowed', 'error');
+                return;
+            }
+            updateTagsUI();
+        }
+
+        function addCustomTag() {
+            const input = document.getElementById('custom-tag-input');
+            const val = input.value.trim();
+            if (!val) return;
+            if (selectedTags.length >= 3) {
+                showToast('Maximum 3 themes allowed', 'error');
+                return;
+            }
+            if (selectedTags.includes(val)) {
+                showToast('Tag already added', 'error');
+                return;
+            }
+            selectedTags.push(val);
+            input.value = '';
+            updateTagsUI();
+        }
+
+        function removeTag(tag) {
+            selectedTags = selectedTags.filter(t => t !== tag);
+            document.querySelectorAll('.tag-chip').forEach(btn => {
+                if (btn.textContent.trim() === tag) btn.classList.remove('selected');
+            });
+            updateTagsUI();
+        }
+
+        function updateTagsUI() {
+            const display = document.getElementById('selected-tags-display');
+            const list = document.getElementById('selected-tags-list');
+            const count = document.getElementById('tag-count');
+
+            display.classList.toggle('hidden', selectedTags.length === 0);
+            count.textContent = `(${selectedTags.length}/3)`;
+
+            list.innerHTML = selectedTags.map(tag =>
+                `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[#2D5A27]/10 text-[#2D5A27] border border-[#2D5A27]/20">
+                    ${escapeHtml(tag)}
+                    <button onclick="removeTag('${tag.replace(/'/g, "\\'")}')" class="hover:text-red-500 transition material-symbols-outlined text-[14px]">close</button>
+                </span>`
+            ).join('');
+
+            document.getElementById('tags-next-btn').disabled = selectedTags.length < 1;
+        }
+
+        // ── Navigation ──
+        function goToStep(step) {
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.add('hidden-step'));
+            document.getElementById(`step-${step}`).classList.remove('hidden-step');
+
+            if (step === 3) startGeneration();
+
+            currentStep = step;
+            updateIndicator();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateIndicator() {
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`indicator-${i}`);
+                const label = document.getElementById(`label-${i}`);
+
+                dot.classList.remove('bg-[#2D5A27]', 'text-white', 'step-active-pulse', 'bg-emerald-100', 'text-emerald-700', 'bg-gray-200', 'text-gray-500');
+                label.classList.remove('text-[#2D5A27]', 'text-emerald-600', 'text-gray-400');
+
+                if (i < currentStep) {
+                    dot.classList.add('bg-emerald-50', 'text-[#2D5A27]');
+                    dot.innerHTML = '<span class="material-symbols-outlined text-[20px]">check</span>';
+                    label.classList.add('text-emerald-600');
+                } else if (i === currentStep) {
+                    dot.classList.add('bg-[#2D5A27]', 'text-white', 'step-active-pulse');
+                    dot.innerHTML = i;
+                    label.classList.add('text-[#2D5A27]');
+                } else {
+                    dot.classList.add('bg-gray-200', 'text-gray-500');
+                    dot.innerHTML = i;
+                    label.classList.add('text-gray-400');
+                }
+            }
+        }
+
+        // ── Generation Logic ──
+        async function startGeneration() {
+            document.getElementById('generating-state').classList.remove('hidden');
+            document.getElementById('success-state').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+
+            document.getElementById('gen-location').textContent = selectedLocation;
+            document.getElementById('gen-tags').textContent = selectedTags.join(', ');
+
+            // Visual Progress Simulation
+            setTimeout(() => updateProgress('research', 'done'), 2000);
+            setTimeout(() => updateProgress('narrative', 'active'), 2500);
+            setTimeout(() => updateProgress('narrative', 'done'), 8000);
+            setTimeout(() => updateProgress('stops', 'active'), 8500);
+
+            try {
+                const resp = await fetch('/api/create-tour', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: selectedLocation, tags: selectedTags })
+                });
+                const data = await resp.json();
+
+                if (data.status === 'success') {
+                    updateProgress('research', 'done');
+                    updateProgress('narrative', 'done');
+                    updateProgress('stops', 'done');
+                    setTimeout(() => showSuccess(data), 500);
+                } else {
+                    showError(data.error || 'Generation failed');
+                }
+            } catch (err) {
+                showError('Network error');
+            }
+        }
+
+        function updateProgress(step, state) {
+            const el = document.getElementById(`progress-${step}`);
+            if (!el) return;
+            const icon = el.querySelector('.material-symbols-outlined');
+            if (state === 'active') {
+                el.classList.remove('text-gray-300');
+                el.classList.add('text-[#2D5A27]');
+                icon.classList.add('animate-spin');
+            } else if (state === 'done') {
+                el.classList.remove('text-gray-300', 'text-[#2D5A27]');
+                el.classList.add('text-emerald-500');
+                icon.classList.remove('animate-spin');
+                icon.textContent = 'check_circle';
+            }
+        }
+
+        function showSuccess(data) {
+            document.getElementById('generating-state').classList.add('hidden');
+            document.getElementById('success-state').classList.remove('hidden');
+            document.getElementById('success-title').textContent = data.title;
+            document.getElementById('success-preview').textContent = data.narrative_preview;
+            document.getElementById('success-link').href = `/tour/generated/${data.tour_id}`;
+            if (data.stops?.length) renderSuccessMap(data.stops);
+        }
+
+        function renderSuccessMap(stops) {
+            const map = L.map('success-map', { zoomControl: false, attributionControl: false });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            const bounds = [];
+            stops.forEach((stop, i) => {
+                const latlng = [stop.lat, stop.lng];
+                bounds.push(latlng);
+                L.marker(latlng, {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div class="stop-pill">${i + 1}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map);
+            });
+            if (bounds.length > 1) {
+                map.fitBounds(bounds, { padding: [30, 30] });
+                L.polyline(bounds, { color: '#2D5A27', weight: 3, dashArray: '5, 10', opacity: 0.5 }).addTo(map);
+            } else map.setView(bounds[0], 15);
+            setTimeout(() => map.invalidateSize(), 200);
+        }
+
+        function showError(msg) {
+            document.getElementById('generating-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+            document.getElementById('error-message').textContent = msg;
+        }
+
+        function showToast(msg, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-6 py-3 rounded-2xl text-white text-sm font-bold shadow-xl toast-enter ${type === 'error' ? 'bg-red-500' : 'bg-[#2D5A27]'}`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

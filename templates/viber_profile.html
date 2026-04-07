@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@{{ profile.handle }} | Hidden SEA Viber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="icon" href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png" type="image/png">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f0f7ef] min-h-screen">
+
+    <!-- Header -->
+    <header class="py-4 px-6 bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-[#2D5A27] rounded-full flex items-center justify-center transition group-hover:rotate-12">
+                    <span class="material-symbols-outlined text-white text-[16px]">waves</span>
+                </div>
+                <span class="font-black text-xl tracking-tighter uppercase">Hidden SEA</span>
+            </a>
+            <div class="flex items-center gap-4">
+                {% if user %}
+                <a href="/vibe" class="text-sm font-bold text-gray-500 hover:text-black transition">Bounty Board</a>
+                <a href="/logout" class="text-sm font-bold text-gray-400 hover:text-red-500 transition">Logout</a>
+                {% else %}
+                <a href="/login" class="text-sm font-bold text-[#2D5A27] hover:underline">Log in</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-16">
+
+        <!-- Profile Card -->
+        <div class="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden mb-12">
+
+            <!-- Top stripe -->
+            <div class="h-3 bg-[#2D5A27]"></div>
+
+            <div class="p-8 md:p-12">
+                <div class="flex flex-col md:flex-row items-start md:items-center gap-8 mb-10">
+
+                    <!-- Avatar -->
+                    <div class="w-24 h-24 rounded-full bg-[#2D5A27] flex items-center justify-center text-white text-3xl font-black shadow-lg flex-shrink-0 overflow-hidden border-4 border-white ring-4 ring-[#2D5A27]/20">
+                        {{ profile.display_name[0].upper() if profile.display_name else '?' }}
+                    </div>
+
+                    <!-- Name + handle + bio -->
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-3 mb-1 flex-wrap">
+                            <h1 class="text-3xl font-black tracking-tight">{{ profile.display_name }}</h1>
+                            <span class="bg-[#2D5A27] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Viber</span>
+                        </div>
+                        <p class="text-gray-400 font-bold text-sm mb-3">@{{ profile.handle }}</p>
+                        {% if profile.bio %}
+                        <p class="text-gray-600 text-sm leading-relaxed max-w-lg">{{ profile.bio }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Stats row -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                    <div class="bg-[#f0f7ef] rounded-2xl p-5 text-center">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Checks Completed</p>
+                        <p class="text-3xl font-black text-[#2D5A27]">{{ checks_completed }}</p>
+                    </div>
+                    <div class="bg-[#f0f7ef] rounded-2xl p-5 text-center">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Earned (IDR)</p>
+                        <p class="text-3xl font-black text-[#2D5A27]">{{ "{:,.0f}".format(bounties_earned) }}</p>
+                    </div>
+                    <div class="col-span-2 md:col-span-1 bg-[#f0f7ef] rounded-2xl p-5 text-center">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Badges Earned</p>
+                        <p class="text-3xl font-black text-[#2D5A27]">{{ badges | length }}</p>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                {% if badges %}
+                <div class="border-t border-gray-100 pt-8">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Badges</h2>
+                    <div class="flex flex-wrap gap-3">
+                        {% for badge in badges %}
+                        <div class="flex items-center gap-3 bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-3">
+                            <span class="text-2xl">{{ badge.icon }}</span>
+                            <div>
+                                <p class="text-sm font-black leading-none mb-0.5">{{ badge.name }}</p>
+                                <p class="text-[10px] text-gray-400 font-medium">{{ badge.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Next badge teaser -->
+                {% set next_badges = [] %}
+                {% for badge in badges_all if badge not in badges %}{% endfor %}
+
+                {% set earned_ids = badges | map(attribute='id') | list %}
+                {% set all_ids = ['first_step','trail_walker','vibe_checker','history_hunter','sea_legend'] %}
+                {% set thresholds = {'first_step':1,'trail_walker':3,'vibe_checker':5,'history_hunter':10,'sea_legend':20} %}
+
+                {% if checks_completed < 20 %}
+                <div class="border-t border-gray-100 pt-8 mt-8">
+                    <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Next Badge</h2>
+                    {% set ns = namespace(found=false) %}
+                    {% for badge in [
+                        {'id':'first_step','name':'First Step','icon':'🌱','description':'Complete your first Vibe Check','threshold':1},
+                        {'id':'trail_walker','name':'Trail Walker','icon':'🚶','description':'Complete 3 Vibe Checks','threshold':3},
+                        {'id':'vibe_checker','name':'Vibe Checker','icon':'✅','description':'Complete 5 Vibe Checks','threshold':5},
+                        {'id':'history_hunter','name':'History Hunter','icon':'🏆','description':'Complete 10 Vibe Checks','threshold':10},
+                        {'id':'sea_legend','name':'SEA Legend','icon':'⭐','description':'Complete 20 Vibe Checks','threshold':20}
+                    ] %}
+                        {% if not ns.found and badge.id not in earned_ids %}
+                        {% set ns.found = true %}
+                        <div class="flex items-center gap-4 bg-gray-50 border border-dashed border-gray-200 rounded-2xl px-5 py-4 opacity-60">
+                            <span class="text-2xl grayscale">{{ badge.icon }}</span>
+                            <div class="flex-grow">
+                                <p class="text-sm font-black leading-none mb-0.5">{{ badge.name }}</p>
+                                <p class="text-[10px] text-gray-400 font-medium">{{ badge.description }}</p>
+                            </div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">{{ badge.threshold - checks_completed }} to go</p>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- Completed Tours -->
+        <section>
+            <h2 class="text-2xl font-black tracking-tight mb-6">Vibe Checked Tours</h2>
+
+            {% if completed_checks %}
+            <div class="space-y-4">
+                {% for check in completed_checks %}
+                <a href="/tour/{{ check.tour_id }}" class="block bg-white rounded-[24px] border border-gray-100 shadow-sm hover:shadow-lg transition p-6 group">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 flex-grow min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-green-600 text-[20px]">verified</span>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="font-black text-sm uppercase tracking-tight group-hover:text-[#2D5A27] transition truncate">{{ check.tour_title }}</h3>
+                                {% if check.tour_location %}
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{{ check.tour_location }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 flex-shrink-0">
+                            {% if check.bounty_amount %}
+                            <div class="text-right hidden sm:block">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bounty</p>
+                                <p class="text-sm font-black text-[#2D5A27]">IDR {{ "{:,.0f}".format(check.bounty_amount) }}</p>
+                            </div>
+                            {% endif %}
+                            {% if check.approved_at %}
+                            <div class="text-right hidden md:block">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Approved</p>
+                                <p class="text-sm font-bold text-gray-600">{{ check.approved_at[:10] }}</p>
+                            </div>
+                            {% endif %}
+                            <span class="material-symbols-outlined text-gray-300 group-hover:text-[#2D5A27] transition">arrow_forward</span>
+                        </div>
+                    </div>
+                    {% if check.overall_notes %}
+                    <p class="mt-4 text-xs text-gray-400 italic pl-14 line-clamp-1">"{{ check.overall_notes }}"</p>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="bg-white rounded-[24px] border border-gray-100 p-12 text-center">
+                <span class="material-symbols-outlined text-gray-200 text-5xl mb-4 block">hiking</span>
+                <p class="font-black text-gray-400 uppercase tracking-widest text-xs">No completed checks yet</p>
+            </div>
+            {% endif %}
+        </section>
+
+    </main>
+
+    <footer class="py-10 px-6 text-center border-t border-gray-100 mt-20">
+        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">&copy; 2026 Hidden SEA. Build with Truth.</p>
+    </footer>
+
+</body>
+</html>
