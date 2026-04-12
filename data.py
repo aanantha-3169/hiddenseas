@@ -160,41 +160,55 @@ tours = {
             {"name": "The Legian Neon Strip", "subtitle": "The Hyper-Commercial Climax", "lat": -8.7155, "lng": 115.1747, "description": "The blinding climax of modern Kuta, where the village has been fully eclipsed by LED facades."}
         ]
     },
-    "bandung-awakening": {
-        "id": "bandung-awakening",
+    "bandung-lautan-api": {
+        "id": "bandung-lautan-api",
         "image": "https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/tour_bandung.png",
-        "title": "The Bandung Awakening: From Colonial Club to Global Revolution",
-        "description": "How a Dutch planters' club became the birthplace of the Third World.",
-        "vibe": "from-orange-900 to-stone-950",
-        "audio_url": "https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/audio/Bandung_Audio.m4a",
+        "title": "Bandung Lautan Api: The City That Burned Itself Free",
+        "description": "In 1946, 200,000 Bandung residents set their own city on fire rather than surrender it.",
+        "vibe": "from-orange-950 to-stone-950",
+        "audio_url": "https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/audio/Bandung_Burned_Itself.m4a",
         "pdf_link": None,
-        "map_url": "https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/maps/bandung.png",
+        "map_url": "https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/maps/bandung_lautan_api.png",
         "google_maps_url": None,
-        "system_prompt": "You are a gritty investigative journalist who covered the Bandung Conference of 1955 and every Southeast Asian upheaval since. You speak in punchy, cinematic sentences and have no patience for sanitized colonial tourism.",
+        "system_prompt": "You are two knowledgeable walking tour guides leading a small group through Bandung. One of you focuses on the historical and political layers of each place; the other brings in the sensory details — what it looks like, smells like, feels like to stand there. Keep the conversation focused on the places, the history, and the stories. Avoid talking about yourselves. Let the city do the talking.",
         "is_vetted": True,
         "rating": 4.8,
-        "center": {"lat": -6.9218, "lng": 107.6070},
+        "center": {"lat": -6.91395, "lng": 107.60940},
         "stops": [
             {
-                "name": "Gedung Merdeka",
-                "subtitle": "The Line in the Sand",
-                "lat": -6.92174,
-                "lng": 107.60733,
-                "description": "Birthplace of the 1955 Bandung Conference — where 29 nations chose neither Washington nor Moscow."
+                "name": "Gedung Sate",
+                "subtitle": "The Governor's Throne",
+                "lat": -6.90222,
+                "lng": 107.61861,
+                "description": "The 1920 Dutch colonial HQ — designed to last forever, lost inside 25 years."
             },
             {
-                "name": "Savoy Homann Hotel",
-                "subtitle": "The Espionage Hotel",
-                "lat": -6.92147,
-                "lng": 107.60885,
-                "description": "1939 Art Deco ocean-liner hotel that hosted CIA spies, KGB agents, and Charlie Chaplin in the same lobby."
+                "name": "Jalan Braga",
+                "subtitle": "The Burn Line",
+                "lat": -6.91776,
+                "lng": 107.60708,
+                "description": "The 'Paris of Java' — the fire stopped 300 meters from here. Barely."
             },
             {
-                "name": "Jalan Braga & Kopi Toko Djawa",
-                "subtitle": "The Aftermath",
-                "lat": -6.91889,
-                "lng": 107.60714,
-                "description": "The former 'Paris of Java' — cobblestone colonial shopping street reclaimed by Bandung's coffee-drinking youth."
+                "name": "Bandung Station",
+                "subtitle": "The Last Exit",
+                "lat": -6.91395,
+                "lng": 107.60940,
+                "description": "200,000 people walked through here heading south on the night of March 23, 1946."
+            },
+            {
+                "name": "Alun-Alun Bandung",
+                "subtitle": "The Rebuilt Heart",
+                "lat": -6.92101,
+                "lng": 107.60663,
+                "description": "The city square that survived the fire and was rebuilt bigger than the empire that built it."
+            },
+            {
+                "name": "Dago Atas",
+                "subtitle": "The Watching Hill",
+                "lat": -6.87975,
+                "lng": 107.61694,
+                "description": "The hillside where 200,000 people stood and watched their city burn below."
             },
         ]
     },
