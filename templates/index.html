@@ -79,24 +79,24 @@
             <span class="font-bold text-lg tracking-tight">Hidden SEA</span>
         </div>
         <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a class="hover:opacity-80 transition" href="#">Destinations</a>
-            <a class="hover:opacity-80 transition" href="#">Tours</a>
-            <a class="hover:opacity-80 transition" href="#">About</a>
         </nav>
         <div class="flex items-center gap-4 text-sm font-medium">
             {% if user %}
             <div class="flex items-center gap-3 bg-white px-3 py-1.5 rounded-full border border-white/40 shadow-sm">
                 {% if user.picture %}
-                <img src="{{ user.picture }}" class="w-6 h-6 rounded-full object-cover border border-gray-200" alt="User">
+                <img src="{{ user.picture }}" class="w-6 h-6 rounded-full object-cover border border-gray-200"
+                    alt="User">
                 {% endif %}
                 <span class="text-xs font-bold text-[#2D5A27]">{{ user.name }}</span>
-                <a class="text-[10px] font-semibold text-gray-400 hover:text-red-500 transition uppercase tracking-tighter" href="/logout">Logout</a>
+                <a class="text-[10px] font-semibold text-gray-400 hover:text-red-500 transition uppercase tracking-tighter"
+                    href="/logout">Logout</a>
             </div>
             {% else %}
             <a class="hover:opacity-80 transition hidden sm:inline" href="/login">Log in</a>
             {% endif %}
             <a class="hover:opacity-80 transition hidden sm:inline" href="/create-tour">Create</a>
-            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get started</button>
+            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get
+                started</button>
         </div>
     </header>
 
@@ -174,8 +174,7 @@
                     <h3 class="text-3xl font-bold mb-6">Start chatting with us.</h3>
                     <p class="text-gray-600 leading-relaxed mb-6">
                         Ask us for suggestions for any destination or ask us for an entire itinerary. Be as specific as
-                        you can about the types of experiences that you like or take our quiz to determine your travel
-                        style.
+                        you can about the types of experiences that you like.
                     </p>
                     <a href="/create-tour"
                         class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-6 py-3 rounded-full font-bold hover:bg-[#234a1e] transition">
@@ -220,7 +219,7 @@
     <section id="tours" class="py-24 px-6 bg-white border-t border-gray-100">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-12">
-                <h2 class="text-3xl md:text-4xl font-extrabold">available tours</h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold">Tours</h2>
                 <a href="/create-tour"
                     class="hidden md:inline-flex items-center gap-1 text-sm font-bold text-[#2D5A27] hover:underline">
                     Create your own <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -277,9 +276,12 @@
                         <span class="material-symbols-outlined text-[18px]">verified</span>
                         Vibe Check
                     </div>
-                    <h2 class="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">Every tour gets walked<br /><span class="text-[#2D5A27]">before it gets worn.</span></h2>
+                    <h2 class="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">Every tour gets walked<br /><span
+                            class="text-[#2D5A27]">before it gets worn.</span></h2>
                     <p class="text-gray-600 leading-relaxed mb-6">
-                        Our AI identifies incredible hidden histories — but we don't stop there. Our <strong>Vibers</strong> — local explorers and history nerds — physically walk every path to verify the vibes, timestamps, and accuracy.
+                        Our AI identifies incredible hidden histories — but we don't stop there. Our
+                        <strong>Vibers</strong> — local explorers and history nerds — physically walk every path to
+                        verify the vibes, timestamps, and accuracy.
                     </p>
                     <p class="text-gray-500 text-sm leading-relaxed mb-8">
                         Tours that haven't been checked yet are marked as <span
@@ -289,41 +291,58 @@
                             Vibe Checked</span> badge.
                     </p>
                     <div class="flex flex-wrap gap-4">
-                        <a href="/become-viber" class="bg-[#2D5A27] text-white px-8 py-3 rounded-full font-bold hover:bg-[#234a1e] transition shadow-md">Become a Viber</a>
-                        <a href="/vibe" class="bg-white border-2 border-[#2D5A27] text-[#2D5A27] px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition">View Bounty Board</a>
+                        <a href="/become-viber"
+                            class="bg-[#2D5A27] text-white px-8 py-3 rounded-full font-bold hover:bg-[#234a1e] transition shadow-md">Become
+                            a Viber</a>
+                        <a href="/vibe"
+                            class="bg-white border-2 border-[#2D5A27] text-[#2D5A27] px-8 py-3 rounded-full font-bold hover:bg-gray-50 transition">View
+                            Bounty Board</a>
                     </div>
                 </div>
                 <!-- Right Side: Steps -->
                 <div class="md:w-1/2">
-                    <div class="bg-white p-8 md:p-10 rounded-[32px] shadow-xl border border-gray-100 relative overflow-hidden">
+                    <div
+                        class="bg-white p-8 md:p-10 rounded-[32px] shadow-xl border border-gray-100 relative overflow-hidden">
                         <div class="space-y-10 relative z-10">
                             <!-- Step 1 -->
                             <div class="flex items-start gap-6 group">
-                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">1</div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">
+                                    1</div>
                                 <div>
                                     <h4 class="font-extrabold text-xl mb-1">Claim a Bounty</h4>
-                                    <p class="text-gray-600 text-sm leading-relaxed">Pick an unvetted tour from the bounty board. Bounties start at <strong>IDR 100k</strong> for local tours.</p>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Pick an unvetted tour from the
+                                        bounty board. Bounties start at <strong>IDR 100k</strong> for local tours.</p>
                                 </div>
                             </div>
                             <!-- Step 2 -->
                             <div class="flex items-start gap-6 group">
-                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">2</div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">
+                                    2</div>
                                 <div>
                                     <h4 class="font-extrabold text-xl mb-1">Walk & Document</h4>
-                                    <p class="text-gray-600 text-sm leading-relaxed">Visit every stop. Take <strong>3 photos & 1 video</strong> per location to verify the current status and atmosphere.</p>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Visit every stop. Take <strong>3
+                                            photos & 1 video</strong> per location to verify the current status and
+                                        atmosphere.</p>
                                 </div>
                             </div>
                             <!-- Step 3 -->
                             <div class="flex items-start gap-6 group">
-                                <div class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">3</div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[#f0f7ef] border-2 border-[#2D5A27] flex items-center justify-center flex-shrink-0 font-black text-[#2D5A27] text-xl group-hover:scale-110 transition">
+                                    3</div>
                                 <div>
                                     <h4 class="font-extrabold text-xl mb-1">Get Paid via GoPay</h4>
-                                    <p class="text-gray-600 text-sm leading-relaxed">Once vetted, your bounty is sent instantly via GoPay. You get the credit and Hidden SEA stays truthful.</p>
+                                    <p class="text-gray-600 text-sm leading-relaxed">Once vetted, your bounty is sent
+                                        instantly via GoPay. You get the credit and Hidden SEA stays truthful.</p>
                                 </div>
                             </div>
                         </div>
                         <!-- Background Glow Decoration -->
-                        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-[#2D5A27] opacity-[0.03] rounded-full blur-3xl"></div>
+                        <div
+                            class="absolute -bottom-20 -right-20 w-64 h-64 bg-[#2D5A27] opacity-[0.03] rounded-full blur-3xl">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -350,13 +369,11 @@
                 <div class="w-6 h-6 bg-[#2D5A27] rounded-full flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-[10px]">waves</span>
                 </div>
-                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA. Built with Gemini.</p>
+                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA.</p>
             </div>
             <nav class="flex gap-8 text-xs font-bold text-gray-600 uppercase tracking-widest">
-                <a class="hover:text-black transition" href="#">Home</a>
-                <a class="hover:text-black transition" href="#">About</a>
-                <a class="hover:text-black transition" href="#">Privacy</a>
-                <a class="hover:text-black transition" href="#">Log on</a>
+                <a class="hover:text-black transition" href="/">Home</a>
+                <a class="hover:text-black transition" href="/login">Log in</a>
             </nav>
         </div>
     </footer>

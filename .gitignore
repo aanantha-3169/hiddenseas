@@ -9,3 +9,8 @@ code.html
 pending_tours.json
 *.csv
 scripts/
+transcripts/
+
+# Local copies of assets served from Supabase in production
+static/audio/
+static/pdfs/

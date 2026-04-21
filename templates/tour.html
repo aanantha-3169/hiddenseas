@@ -13,92 +13,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <link rel="icon" type="image/png"
-        href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="https://jkpuvxquhjmmhwanmyfa.supabase.co/storage/v1/object/public/images/favicon.png">
     {% if tour.get('generated') or (tour.get('stops') and tour.stops | length > 0) %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     {% endif %}
     <title>{{ tour.title }} - Hidden SEA</title>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
 
+        /* Narrative content formatting */
         .narrative-content h2,
-        .narrative-content strong {
-            color: #1a1a1a;
-            font-weight: 700;
-        }
+        .narrative-content strong { color: #1a1a1a; font-weight: 700; }
+        .narrative-content p { margin-bottom: 1rem; line-height: 1.8; }
 
-        .narrative-content p {
-            margin-bottom: 1rem;
-            line-height: 1.8;
-        }
-
+        /* Stop markers */
         .stop-marker {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            background: #2D5A27;
-            border: 3px solid white;
-            border-radius: 50%;
-            color: white;
-            font-size: 12px;
-            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; background: #2D5A27;
+            border: 3px solid white; border-radius: 50%;
+            color: white; font-size: 12px; font-weight: 700;
             box-shadow: 0 2px 8px rgba(45, 90, 39, 0.4);
+            transition: transform 0.2s;
+        }
+        .stop-marker.active  { background: #1a7a3c; transform: scale(1.25); }
+        .stop-marker.visited { background: #86a882; }
+
+        /* GPS dot */
+        .gps-dot-outer {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            animation: gps-pulse 2s infinite;
+        }
+        .gps-dot-inner {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #3b82f6; border: 2px solid white;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+        }
+        @keyframes gps-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            50%       { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
         }
 
-        /* Custom audio player styling */
-        audio::-webkit-media-controls-panel {
-            background: #f9fafb;
-            border-radius: 12px;
+        /* Custom audio track — amber accent */
+        .audio-track { position: relative; height: 4px; background: #e5e7eb; border-radius: 2px; cursor: pointer; }
+        .audio-fill  { height: 100%; background: linear-gradient(90deg, #f5c76a, #c4882a); border-radius: 2px; transition: width 0.1s; }
+        .audio-thumb {
+            position: absolute; top: 50%; width: 12px; height: 12px; background: #c4882a;
+            border-radius: 50%; transform: translate(-50%, -50%); transition: left 0.1s;
+            box-shadow: 0 0 5px rgba(196,136,42,0.45);
         }
+
+        /* Stop cards */
+        .stop-card { transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; border-left: 3px solid transparent !important; }
+        .stop-card:hover { border-left-color: #2D5A27 !important; }
+        .stop-card.nearby { border-color: #2D5A27 !important; box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.12); }
+        .stop-card.visited-card { background: #f4faf3 !important; border-left-color: #86a882 !important; opacity: 1; }
+
+        /* Pricing lock overlay */
+        .locked-audio { filter: blur(1px) grayscale(1); pointer-events: none; }
+        .unlock-overlay {
+            position: absolute; inset: 0; background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px); border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; z-index: 10;
+        }
+
+        /* Walk connector */
+        .walk-connector {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 0 4px 20px; color: #9ca3af; font-size: 11px; font-weight: 600;
+        }
+        .walk-line { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, #d1d5db 0, #d1d5db 4px, transparent 4px, transparent 10px); }
+
+        /* Nearby badge */
+        .nearby-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #dcfce7; color: #166534; border-radius: 999px;
+            padding: 2px 8px; font-size: 10px; font-weight: 700;
+            animation: badge-pop 0.3s ease;
+        }
+        @keyframes badge-pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* Map controls */
+        .map-btn {
+            background: white; border: none; border-radius: 8px;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.2); cursor: pointer;
+            font-size: 14px; color: #374151;
+        }
+        .map-btn:hover { background: #f9fafb; }
+
+        /* Sim slider */
+        .sim-slider { accent-color: #3b82f6; }
+
+        /* Share toast */
+        .share-toast {
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #2D5A27; color: white; padding: 12px 24px;
+            border-radius: 9999px; font-weight: 600; font-size: 14px;
+            z-index: 100; opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .share-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         /* Places carousel scroll */
-        .places-scroll {
-            scroll-behavior: smooth;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .places-scroll { scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
+        .places-scroll::-webkit-scrollbar { display: none; }
 
-        .places-scroll::-webkit-scrollbar {
-            display: none;
+        /* Two-pane sticky layout (stops present) */
+        .tour-main-layout { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #f0f0f0; }
+        @media (max-width: 1024px) { .tour-main-layout { grid-template-columns: 1fr; } }
+        .tour-left-col { overflow-y: auto; height: calc(100vh - 64px); position: sticky; top: 64px; background: #fafaf8; }
+        .tour-right-col { position: sticky; top: 64px; height: calc(100vh - 64px); display: flex; flex-direction: column; border-left: 1px solid #f0f0f0; }
+        @media (max-width: 1024px) {
+            .tour-left-col { height: auto; position: static; overflow-y: visible; }
+            .tour-right-col { height: 420px; position: static; }
         }
+        .tour-left-col::-webkit-scrollbar { width: 4px; }
+        .tour-left-col::-webkit-scrollbar-track { background: transparent; }
+        .tour-left-col::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
 
-        /* Share tooltip */
-        .share-toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #2D5A27;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 9999px;
-            font-weight: 600;
-            font-size: 14px;
-            z-index: 100;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Hero audio track (white fill on dark bg) */
+        .hero-audio-track { position: relative; height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; cursor: pointer; }
+        .hero-audio-fill  { height: 100%; background: linear-gradient(90deg, #f5c76a, #c4882a); border-radius: 2px; transition: width 0.15s linear; }
+        .hero-audio-thumb { position: absolute; top: 50%; width: 11px; height: 11px; background: #f5c76a; border: 2px solid white; border-radius: 50%; transform: translate(-50%,-50%); transition: left 0.15s linear; box-shadow: 0 0 6px rgba(196,136,42,0.5); }
 
-        .share-toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        /* Tab button */
+        .tab-btn { transition: color 0.15s, border-color 0.15s; }
+
+        /* Guide book */
+        .guide-page { font-family: 'Lora', Georgia, serif; }
+        .guide-drop-cap::first-letter { float: left; font-size: 3em; line-height: 0.85; margin: 0.06em 0.1em 0 0; color: #2D5A27; font-weight: 600; }
+        .guide-rule { border: none; border-top: 1px solid #e2dcd3; margin: 1.5rem 0; }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
 </head>
 
 <body class="bg-white text-gray-900">
 
-    <!-- Header / Navigation (matching index.html) -->
+    <!-- Header / Navigation -->
     <header class="bg-[#2D5A27] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <a href="/" class="flex items-center gap-2 hover:opacity-90 transition">
             <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
@@ -112,101 +169,461 @@
             <a class="hover:opacity-80 transition" href="/">About</a>
         </nav>
         <div class="flex items-center gap-4 text-sm font-medium">
-            <a class="hover:opacity-80 transition hidden sm:inline" href="#">Log in</a>
+            {% if session.user %}
+            <div class="flex items-center gap-3 bg-white px-3 py-1.5 rounded-full border border-white/40 shadow-sm">
+                {% if session.user.picture %}
+                <img src="{{ session.user.picture }}" class="w-6 h-6 rounded-full object-cover border border-gray-200" alt="User">
+                {% endif %}
+                <span class="text-xs font-bold text-[#2D5A27]">{{ session.user.name }}</span>
+                <a class="text-[10px] font-semibold text-gray-400 hover:text-red-500 transition uppercase tracking-tighter" href="/logout">Logout</a>
+            </div>
+            {% else %}
+            <a class="hover:opacity-80 transition hidden sm:inline" href="/login">Log in</a>
+            {% endif %}
             <a class="hover:opacity-80 transition hidden sm:inline" href="/create-tour">Create</a>
-            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get
-                started</button>
+            <button class="bg-white text-[#2D5A27] px-5 py-2 rounded-full font-bold hover:bg-gray-100 transition">Get started</button>
         </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="bg-[#2D5A27] text-white px-6 pt-8 pb-12 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto">
-            <!-- Breadcrumb -->
-            <a href="/" class="text-white/70 text-sm mb-6 inline-flex items-center hover:text-white transition group">
-                <span
-                    class="material-symbols-outlined text-[16px] mr-1 group-hover:-translate-x-1 transition">arrow_back</span>
-                Back to Home
-            </a>
+    <section class="text-white px-6 pt-8 pb-12 relative overflow-hidden" {% if tour.get('image') %}style="background-image: url('{{ tour.image }}'); background-size: cover; background-position: center;"{% else %}style="background: linear-gradient(160deg, #1e4020 0%, #2D5A27 45%, #3a7033 100%);"{% endif %}>
+        {% if tour.get('image') %}
+        <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(160deg, rgba(20,40,18,0.82) 0%, rgba(30,64,32,0.75) 50%, rgba(40,80,38,0.68) 100%);"></div>
+        {% else %}
+        <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(circle, rgba(255,255,255,0.11) 1px, transparent 1px); background-size: 22px 22px;"></div>
+        {% endif %}
+        <div class="absolute -bottom-20 -right-20 w-80 h-80 rounded-full pointer-events-none" style="background: radial-gradient(circle, rgba(196,136,42,0.16) 0%, transparent 70%);"></div>
+        <div class="max-w-7xl mx-auto relative">
 
-            <!-- Badge -->
-            <div class="flex items-center gap-3 mb-4 mt-4">
-                {% if tour.get('generated') %}
-                <span
-                    class="flex items-center gap-1 bg-amber-500/20 text-amber-200 px-3 py-1 rounded-full text-xs font-bold border border-amber-500/30">
-                    ⚡ AI Generated
-                </span>
-                {% elif tour.is_vetted %}
-                <span
-                    class="flex items-center gap-1 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30">
-                    ✨ Vetted <span class="text-white/60 mx-1">|</span> ★ {{ tour.rating }}
-                </span>
-                {% endif %}
-                {% if tour.get('location') %}
-                <span class="text-xs text-white/60 font-medium uppercase tracking-wider">{{ tour.location }}</span>
-                {% endif %}
-            </div>
-
-            <h1 class="text-4xl md:text-6xl font-extrabold leading-[0.95] mb-4 max-w-4xl">{{ tour.title }}</h1>
-            <p class="text-white/80 text-sm md:text-lg max-w-2xl mb-8 leading-relaxed">{{ tour.description }}</p>
-        </div>
-    </section>
-
-    <!-- Audio Player + Action Buttons Bar -->
-    <section class="bg-[#f8faf7] border-b border-gray-200 px-6 py-6">
-        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-start lg:items-center gap-6">
-            <!-- Audio Player -->
-            <div class="flex-grow w-full lg:w-auto">
-                {% if tour.audio_url %}
-                <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-                    <div class="flex items-center justify-between mb-2 px-1">
-                        <span
-                            class="text-[10px] font-bold text-[#2D5A27] uppercase tracking-widest flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">headphones</span> Audio Guide
-                        </span>
-                        <span class="text-[10px] font-mono text-gray-400">HI-RES AUDIO</span>
-                    </div>
-                    <audio controls class="w-full h-10">
-                        <source src="{{ tour.audio_url }}" type="audio/mp4">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-                {% elif tour.get('generated') %}
-                <div class="bg-white rounded-2xl p-4 border border-gray-200 border-dashed">
-                    <div class="flex items-center gap-3 text-gray-400">
-                        <span class="material-symbols-outlined text-[20px]">mic</span>
-                        <span class="text-sm">Audio guide coming soon — NotebookLM podcast generation is next.</span>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-3 flex-shrink-0">
-                <button onclick="shareTour()"
-                    class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-white transition group"
-                    title="Share Tour">
-                    <span
-                        class="material-symbols-outlined text-[22px] text-gray-500 group-hover:text-[#2D5A27] transition">share</span>
-                    <span class="text-[10px] font-bold text-gray-500 group-hover:text-[#2D5A27]">Share Tour</span>
-                </button>
-                <a href="#vibe-check-info"
-                    class="flex flex-col items-center gap-1 px-4 py-3 bg-[#2D5A27] text-white rounded-xl hover:bg-[#234a1e] transition">
-                    <span class="material-symbols-outlined text-[22px]">verified</span>
-                    <span class="text-[10px] font-bold">Vibe Check</span>
+            <!-- Back + actions row -->
+            <div class="flex items-center justify-between mb-6">
+                <a href="/" class="text-white/70 text-sm inline-flex items-center hover:text-white transition group gap-1">
+                    <span class="material-symbols-outlined text-[15px] group-hover:-translate-x-0.5 transition">arrow_back</span>
+                    Tours
                 </a>
-                <button onclick="alert('Publishing to community coming soon!')"
-                    class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-white transition group"
-                    title="Publish">
-                    <span
-                        class="material-symbols-outlined text-[22px] text-gray-500 group-hover:text-[#2D5A27] transition">public</span>
-                    <span class="text-[10px] font-bold text-gray-500 group-hover:text-[#2D5A27]">Publish</span>
-                </button>
+                <div class="flex items-center gap-1">
+                    <button onclick="shareTour()" title="Share" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition">
+                        <span class="material-symbols-outlined text-white/70 text-[18px]">share</span>
+                    </button>
+                    <button title="Save" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition">
+                        <span class="material-symbols-outlined text-white/70 text-[18px]">bookmark</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row lg:items-end gap-8">
+
+                <!-- Title block -->
+                <div class="flex-1">
+                    <!-- Vibe / status badge -->
+                    <div class="flex items-center gap-2 mb-4">
+                        {% if tour.get('generated') %}
+                        <span class="flex items-center gap-1.5 text-xs font-bold text-amber-200">
+                            ⚡ AI Generated
+                        </span>
+                        {% elif tour.is_vetted %}
+                        <span class="flex items-center gap-1.5 text-xs font-bold text-green-200">
+                            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1">verified</span>
+                            Vetted
+                        </span>
+                        <span class="text-white/30">·</span>
+                        <span class="text-xs font-bold text-yellow-300">★ {{ tour.rating }}</span>
+                        {% endif %}
+                        {% if tour.get('location') %}
+                        <span class="text-white/30">·</span>
+                        <span class="text-xs text-white/50 font-medium uppercase tracking-wide">{{ tour.location }}</span>
+                        {% endif %}
+                    </div>
+
+                    <h1 class="text-4xl md:text-5xl font-extrabold leading-[0.95] mb-3 max-w-xl">{{ tour.title }}</h1>
+                    <p class="text-white/75 text-sm md:text-base max-w-lg leading-relaxed mb-5">{{ tour.description }}</p>
+
+                    {% if tour.get('stops') and tour.stops | length > 0 %}
+                    <div class="flex flex-wrap gap-2">
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold">
+                            <span class="material-symbols-outlined text-[13px] text-white/60">directions_walk</span>
+                            <span id="tour-distance">Calculating…</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold">
+                            <span class="material-symbols-outlined text-[13px] text-white/60">schedule</span>
+                            <span id="tour-time">Calculating…</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold">
+                            <span class="material-symbols-outlined text-[13px] text-white/60">tour</span>
+                            {{ tour.stops | length }} stops
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold">
+                            <span class="material-symbols-outlined text-[13px] text-green-300">check_circle</span>
+                            <span class="text-green-200">Free · {% if tour.audio_url %}Audio included{% else %}Audio $3{% endif %}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Audio player (hero, only when audio exists + stops present) -->
+                {% if tour.audio_url and tour.get('stops') and tour.stops | length > 0 %}
+                <div class="lg:w-80 flex-shrink-0">
+                    <div class="bg-white/10 border border-white/15 rounded-2xl p-4 backdrop-blur-sm">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[13px]">headphones</span>
+                            Tour Intro
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <button onclick="toggleIntroAudio(this)" id="intro-play-btn" class="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 hover:scale-105 transition">
+                                <span class="material-symbols-outlined text-[#2D5A27] text-[20px]" id="intro-icon">play_arrow</span>
+                            </button>
+                            <div class="flex-1">
+                                <div class="hero-audio-track mb-2" id="intro-track">
+                                    <div class="hero-audio-fill" id="intro-fill" style="width:0%"></div>
+                                    <div class="hero-audio-thumb" id="intro-thumb" style="left:0%"></div>
+                                </div>
+                                <div class="flex justify-between text-[10px] font-mono text-white/40">
+                                    <span id="intro-cur">0:00</span>
+                                    <span id="intro-dur">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </section>
 
-    <!-- Main Content Area -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Main Content: two layouts depending on whether stops exist     -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+
+    {% if tour.get('stops') and tour.stops | length > 0 %}
+    <!-- ── TWO-PANE LAYOUT: stops present ── -->
+    <div class="tour-main-layout">
+
+        <!-- ── LEFT: Tabs + content ── -->
+        <div class="tour-left-col">
+
+            <!-- Tab bar -->
+            <div class="sticky top-0 bg-white border-b border-gray-100 z-10 px-8 pt-5 pb-0">
+                <div class="flex gap-6">
+                    <button id="tab-stops" onclick="switchTab('stops')"
+                        class="tab-btn pb-3 text-sm font-bold text-[#2D5A27] border-b-2 border-[#2D5A27]">Stops</button>
+                    <button id="tab-guide" onclick="switchTab('guide')"
+                        class="tab-btn pb-3 text-sm font-bold text-gray-400 border-b-2 border-transparent hover:text-gray-700">Field Guide</button>
+                    <button id="tab-tips" onclick="switchTab('tips')"
+                        class="tab-btn pb-3 text-sm font-bold text-gray-400 border-b-2 border-transparent hover:text-gray-700">Travel Tips</button>
+                </div>
+            </div>
+
+            <!-- STOPS PANEL -->
+            <div id="panel-stops" class="px-8 py-6">
+                <div class="flex items-center justify-between mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Progress</p>
+                    <div class="flex items-center gap-2">
+                        <span id="progress-label" class="text-xs font-bold text-gray-400">0 / {{ tour.stops | length }}</span>
+                        <div class="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div id="progress-bar" class="h-full bg-[#2D5A27] rounded-full transition-all" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="stops-list" class="flex flex-col"></div>
+                {% if tour.get('tags') %}
+                <div class="flex flex-wrap gap-2 mt-6">
+                    {% for tag in tour.tags %}
+                    <span class="px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-500 font-medium">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Compact Vibe Check card inside stops panel -->
+                {% if tour.get('generated') %}
+                {% set sub_status = tour.get('submission_status') %}
+                <div class="mt-8 mb-4 bg-white rounded-2xl border-2 {% if sub_status == 'approved' %}border-green-100{% elif sub_status == 'pending' %}border-blue-100{% elif sub_status == 'rejected' %}border-red-100{% else %}border-purple-100{% endif %} p-5 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="material-symbols-outlined text-purple-500 text-[20px]">auto_awesome</span>
+                            <h4 class="font-black text-base text-purple-900">AI-Generated Preview</h4>
+                        </div>
+                        {% if sub_status == 'approved' %}
+                        <div class="flex items-center gap-2 bg-green-100 text-green-800 py-2.5 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">check_circle</span> Tour Approved
+                        </div>
+                        {% elif sub_status == 'pending' %}
+                        <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-2.5 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">hourglass_top</span> Under Review
+                        </div>
+                        {% elif sub_status == 'rejected' %}
+                        <div class="flex items-center gap-2 bg-red-100 text-red-800 py-2.5 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">cancel</span> Not Approved
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-purple-800/80 leading-relaxed mb-4">Happy with this route? Submit it for review to become an official Hidden SEA tour.</p>
+                        <button id="submit-tour-btn" onclick="submitTourForReview('{{ tour_id }}')"
+                            class="block w-full text-center bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition">
+                            Submit for Review →
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600 opacity-[0.05] rounded-full blur-2xl"></div>
+                </div>
+                {% elif not tour.is_vetted %}
+                <div class="mt-8 mb-4 bg-white rounded-2xl border-2 border-amber-100 p-5 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-amber-600 text-[20px]">error_outline</span>
+                                <h4 class="font-black text-base text-amber-900">AI Generated</h4>
+                            </div>
+                            <span class="bg-amber-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">IDR 100K BOUNTY</span>
+                        </div>
+                        <p class="text-sm text-amber-800/80 leading-relaxed mb-4">This route hasn't been human-verified yet. Claim the bounty to walk and verify it.</p>
+                        {% if not session.user %}
+                        <a href="/login?next=/vibe" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition">Log in to Claim Bounty</a>
+                        {% elif session.user.role not in ['viber', 'admin'] %}
+                        <a href="/become-viber" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition">Become a Viber to Claim</a>
+                        {% elif tour.vibe_status == 'submitted' %}
+                        <div class="w-full text-center bg-amber-50 border-2 border-amber-200 text-amber-700 py-3 rounded-xl font-bold">Submission Under Review</div>
+                        {% elif tour.user_has_claim %}
+                        <a href="/vibe/submit/{{ tour_id }}" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition">Submit Photos &amp; Videos →</a>
+                        {% else %}
+                        <form action="/vibe/claim/{{ tour_id }}" method="POST">
+                            <button type="submit" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition">Claim Bounty &amp; Walk Tour</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-600 opacity-[0.05] rounded-full blur-2xl"></div>
+                </div>
+                {% endif %}
+            </div><!-- /panel-stops -->
+
+            <!-- FIELD GUIDE PANEL -->
+            <div id="panel-guide" class="hidden">
+                {% if tour.pdf_link %}
+                <!-- Book container -->
+                <div class="relative">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-r from-[#2D5A27] to-[#3a7033]"></div>
+                    <div class="pl-8 pr-8 pt-6 pb-10">
+                        <!-- Guide header -->
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-[#9a8f7e] mb-1">Hidden SEA · Field Guide</p>
+                                <h2 class="text-xl font-bold text-gray-900 guide-page">{{ tour.title }}</h2>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ tour.pdf_link }}" target="_blank"
+                                    class="flex items-center gap-1.5 text-xs font-bold text-[#2D5A27] border border-[#2D5A27]/30 bg-white hover:bg-[#2D5A27] hover:text-white px-3 py-1.5 rounded-full transition">
+                                    <span class="material-symbols-outlined text-[13px]">download</span>Download PDF
+                                </a>
+                                <a href="{{ tour.pdf_link }}" target="_blank"
+                                    class="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 px-2 py-1.5 rounded-full hover:bg-gray-100 transition">
+                                    <span class="material-symbols-outlined text-[13px]">open_in_new</span>Full screen
+                                </a>
+                            </div>
+                        </div>
+                        <!-- PDF viewer -->
+                        <div class="relative rounded-2xl overflow-hidden border border-[#e2dcd3]" style="height: clamp(500px, 65vh, 780px);">
+                            <div class="absolute inset-0 pointer-events-none z-10"
+                                style="box-shadow: inset -14px 0 20px -10px rgba(0,0,0,0.06), inset 0 -10px 16px -8px rgba(0,0,0,0.05);"></div>
+                            <iframe src="{{ tour.pdf_link }}?v=1#toolbar=0&navpanes=0&scrollbar=0"
+                                class="w-full h-full" style="border: none; background: #faf8f4;">
+                                <a href="{{ tour.pdf_link }}">Download the guide</a>
+                            </iframe>
+                        </div>
+                        <!-- Footer -->
+                        <div class="flex items-center justify-between mt-4 text-[11px] text-[#b0a898] font-medium">
+                            <span>{{ tour.get('location') or 'Southeast Asia' }} · {{ tour.stops | length }} stops</span>
+                            <a href="{{ tour.pdf_link }}" target="_blank"
+                                class="flex items-center gap-1 text-[#2D5A27] hover:underline font-semibold">
+                                <span class="material-symbols-outlined text-[12px]">print</span>Print guide
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="px-8 py-16 text-center text-gray-400">
+                    <span class="material-symbols-outlined text-[48px] text-gray-200 mb-4 block">menu_book</span>
+                    <p class="text-sm font-semibold">Field guide coming soon</p>
+                    <p class="text-xs mt-1">A companion PDF for this tour is being prepared.</p>
+                </div>
+                {% endif %}
+            </div><!-- /panel-guide -->
+
+            <!-- TRAVEL TIPS PANEL -->
+            <div id="panel-tips" class="hidden px-8 py-6 pb-12">
+                <p class="text-xs text-gray-400 font-semibold mb-6 leading-relaxed">Local knowledge to make the most of your visit.</p>
+
+                <!-- Getting There -->
+                <div class="mb-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:#e8f4ff">
+                            <span class="material-symbols-outlined text-[14px]" style="color:#3b82f6">directions_subway</span>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">Getting There</h4>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-blue-400 flex-shrink-0 mt-0.5">local_taxi</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Use <strong class="text-gray-900">Grab or Gojek</strong> rather than unmetered taxis — set the price before you get in if taking a regular cab.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-blue-400 flex-shrink-0 mt-0.5">directions_walk</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Start the tour in the <strong class="text-gray-900">morning or late afternoon</strong> — midday heat and crowds make the experience harder.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-blue-400 flex-shrink-0 mt-0.5">map</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Download the area map offline in Google Maps before you leave — data can be spotty in older districts.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Etiquette -->
+                <div class="mb-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:#fef3e2">
+                            <span class="material-symbols-outlined text-[14px]" style="color:#c4882a">volunteer_activism</span>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">Etiquette</h4>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-amber-400 flex-shrink-0 mt-0.5">checkroom</span>
+                            <p class="text-sm text-gray-700 leading-relaxed"><strong class="text-gray-900">Dress modestly</strong> near religious sites — cover shoulders and knees. Sarongs are often available to borrow at temple entrances.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-amber-400 flex-shrink-0 mt-0.5">volume_off</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Keep voices low near mosques, temples, and cemeteries — especially during active prayer or ceremony.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-amber-400 flex-shrink-0 mt-0.5">remove_shopping_cart</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Bargain respectfully at markets — starting at half the asking price is usually fair. A firm no-thanks ends a negotiation cleanly.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Food & Drink -->
+                <div class="mb-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:#f0fdf4">
+                            <span class="material-symbols-outlined text-[14px]" style="color:#2D5A27">restaurant</span>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">Food & Drink</h4>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-[#2D5A27] flex-shrink-0 mt-0.5">storefront</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Follow locals to <strong class="text-gray-900">warungs and hawker stalls</strong> near the stops — the best food is rarely near the tourist entrance.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-[#2D5A27] flex-shrink-0 mt-0.5">water_drop</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Carry a <strong class="text-gray-900">reusable water bottle</strong> — humidity in SEA makes this walk thirstier than it looks on a map.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photography -->
+                <div class="mb-7">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:#fdf2f8">
+                            <span class="material-symbols-outlined text-[14px]" style="color:#a855f7">photo_camera</span>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">Photography</h4>
+                    </div>
+                    <div class="space-y-2.5">
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-purple-400 flex-shrink-0 mt-0.5">wb_twilight</span>
+                            <p class="text-sm text-gray-700 leading-relaxed"><strong class="text-gray-900">Golden hour (6–8am)</strong> gives colonial architecture and street scenes a warm glow with virtually no crowds.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-purple-400 flex-shrink-0 mt-0.5">person</span>
+                            <p class="text-sm text-gray-700 leading-relaxed"><strong class="text-gray-900">Always ask permission</strong> before photographing people — a smile and a gesture go a long way even without a shared language.</p>
+                        </div>
+                        <div class="flex gap-3 bg-white rounded-xl border border-gray-100 p-3.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] text-purple-400 flex-shrink-0 mt-0.5">no_photography</span>
+                            <p class="text-sm text-gray-700 leading-relaxed">Photography is restricted inside most prayer halls and some museum rooms — look for signs or ask staff before shooting.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Best Time -->
+                <div class="mb-2">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style="background:#f0fdf4">
+                            <span class="material-symbols-outlined text-[14px]" style="color:#2D5A27">calendar_month</span>
+                        </div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">Best Time to Visit</h4>
+                    </div>
+                    <div class="rounded-2xl overflow-hidden border border-gray-100">
+                        <div class="grid grid-cols-3 text-center text-xs font-bold">
+                            <div class="p-3.5 bg-green-50 border-r border-gray-100">
+                                <p class="text-[#2D5A27] font-black text-sm mb-0.5">Morning</p>
+                                <p class="text-gray-500 font-medium text-[11px]">7 – 10 am</p>
+                                <p class="text-[11px] text-gray-400 mt-1 font-normal">Cooler, quieter, best light</p>
+                            </div>
+                            <div class="p-3.5 bg-white border-r border-gray-100">
+                                <p class="text-amber-600 font-black text-sm mb-0.5">Avoid</p>
+                                <p class="text-gray-500 font-medium text-[11px]">12 – 3 pm</p>
+                                <p class="text-[11px] text-gray-400 mt-1 font-normal">Peak heat, most crowded</p>
+                            </div>
+                            <div class="p-3.5 bg-green-50">
+                                <p class="text-[#2D5A27] font-black text-sm mb-0.5">Dusk</p>
+                                <p class="text-gray-500 font-medium text-[11px]">5 – 7 pm</p>
+                                <p class="text-[11px] text-gray-400 mt-1 font-normal">Cooler, lively atmosphere</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /panel-tips -->
+
+        </div><!-- /left col -->
+
+        <!-- ── RIGHT: Map ── -->
+        <div class="tour-right-col">
+
+            <!-- Map controls strip -->
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-gray-400 text-[16px]">map</span>
+                    <span class="text-xs font-bold text-gray-600">Route Map</span>
+                    <span class="text-xs text-gray-400">· {{ tour.stops | length }} stops</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="gps-status" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GPS off</span>
+                    <button onclick="toggleGPS()" id="gps-btn"
+                        class="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200 hover:border-blue-400 hover:text-blue-600 transition">
+                        <span class="material-symbols-outlined text-[13px]">my_location</span>
+                        Track me
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="flex-1 relative">
+                <div id="tour-map" class="absolute inset-0"></div>
+
+                <!-- GPS proximity alert -->
+                <div id="proximity-alert" class="hidden absolute top-3 left-3 right-3 bg-white/95 backdrop-blur rounded-xl p-3 border border-green-200 shadow-md z-[999] flex items-center gap-2 text-sm font-semibold text-green-800">
+                    <span class="material-symbols-outlined text-[18px] text-green-600">place</span>
+                    <span id="proximity-text">You're near a stop!</span>
+                    <button onclick="triggerNearbyAudio()" class="ml-auto flex items-center gap-1 bg-[#2D5A27] text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-[#234a1e]">
+                        <span class="material-symbols-outlined text-[12px]">play_arrow</span> Play
+                    </button>
+                </div>
+
+                <!-- GPS simulator -->
+                <div id="gps-sim" class="hidden absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur rounded-xl p-3 border border-blue-200 shadow-md z-[999]">
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Simulate your position along route</p>
+                    <input type="range" min="0" max="100" value="0" id="gps-sim-slider" class="sim-slider w-full" oninput="simulateGPS(this.value)">
+                    <div class="flex justify-between text-[10px] text-gray-400 font-bold mt-1">
+                        <span>Start</span><span>← drag →</span><span>End</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /right col -->
+
+    </div><!-- /tour-main-layout -->
+
+    {% else %}
+    <!-- ── EXISTING LAYOUT: no stops (PDF/narrative + map) ── -->
     <section class="px-6 py-12 max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
@@ -223,10 +640,8 @@
                         OPEN FULLSCREEN <span class="material-symbols-outlined text-[14px]">open_in_new</span>
                     </a>
                 </div>
-                <div
-                    class="flex-grow bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative h-[700px] lg:h-[800px]">
-                    <iframe src="{{ tour.pdf_link }}?v=1#toolbar=0" class="w-full h-full absolute inset-0"
-                        style="border: none;">
+                <div class="flex-grow bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative h-[700px] lg:h-[800px]">
+                    <iframe src="{{ tour.pdf_link }}?v=1#toolbar=0" class="w-full h-full absolute inset-0" style="border:none;">
                         This browser does not support PDFs. <a href="{{ tour.pdf_link }}">Download</a>.
                     </iframe>
                 </div>
@@ -236,19 +651,15 @@
                         <span class="material-symbols-outlined text-[20px] text-gray-400">description</span>
                         Tour Narrative
                     </h3>
-                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">AI
-                        GENERATED</span>
+                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">AI GENERATED</span>
                 </div>
-                <div class="flex-grow bg-gray-50 rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 overflow-y-auto narrative-content"
-                    style="max-height: 800px;">
+                <div class="flex-grow bg-gray-50 rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 overflow-y-auto narrative-content" style="max-height:800px;">
                     <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
-                        {{ tour.narrative | replace('\n\n', '</p>
-                        <p>') | replace('\n', '<br>') | replace('**', '<strong>') | safe }}
+                        {{ tour.narrative | replace('\n\n', '</p><p>') | replace('\n', '<br>') | replace('**', '<strong>') | safe }}
                     </div>
                 </div>
                 {% else %}
-                <div
-                    class="flex-grow flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-200 text-gray-400 text-sm p-8 text-center min-h-[400px]">
+                <div class="flex-grow flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-200 text-gray-400 text-sm p-8 text-center min-h-[400px]">
                     <div>
                         <span class="material-symbols-outlined text-[48px] text-gray-300 mb-4 block">article</span>
                         Tour content not yet available.
@@ -257,205 +668,134 @@
                 {% endif %}
             </div>
 
-            <!-- Right Column: Route Map & Extras -->
+            <!-- Right Column: Vibe Check + Map + Places -->
             <div class="flex flex-col space-y-8">
 
-                <!-- Vibe Check Status / Bounty CTA / Submit for Review -->
-                <div class="w-full">
-
-                    {% if tour.get('generated') %}
-                    {# ── Generated tour: show Submit for Review panel ── #}
-                    {% set sub_status = tour.get('submission_status') %}
-                    <div class="bg-white rounded-2xl border-2
-                        {% if sub_status == 'approved' %}border-green-100 bg-green-50/30
-                        {% elif sub_status == 'pending' %}border-blue-100 bg-blue-50/30
-                        {% elif sub_status == 'rejected' %}border-red-100 bg-red-50/30
-                        {% else %}border-purple-100 bg-purple-50/30{% endif %}
-                        p-6 relative overflow-hidden">
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-purple-500 text-[24px]">auto_awesome</span>
-                                    <h4 class="font-black text-lg text-purple-900">AI-Generated Preview</h4>
-                                </div>
-                                {% if not sub_status %}
-                                <span class="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">
-                                    Your Idea
-                                </span>
-                                {% endif %}
+                <!-- Vibe Check panel (no-stops version) -->
+                {% if tour.get('generated') %}
+                {% set sub_status = tour.get('submission_status') %}
+                <div class="bg-white rounded-2xl border-2 {% if sub_status == 'approved' %}border-green-100 bg-green-50/30{% elif sub_status == 'pending' %}border-blue-100 bg-blue-50/30{% elif sub_status == 'rejected' %}border-red-100 bg-red-50/30{% else %}border-purple-100 bg-purple-50/30{% endif %} p-6 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-purple-500 text-[24px]">auto_awesome</span>
+                                <h4 class="font-black text-lg text-purple-900">AI-Generated Preview</h4>
                             </div>
-
-                            {% if sub_status == 'approved' %}
-                            <p class="text-sm text-green-800/80 leading-relaxed mb-4">Your tour idea has been approved and is being added to the main catalogue. Thank you for contributing to Hidden SEA!</p>
-                            <div class="flex items-center gap-2 bg-green-100 text-green-800 py-3 px-4 rounded-xl font-bold text-sm">
-                                <span class="material-symbols-outlined text-[18px]">check_circle</span>
-                                Tour Approved
-                            </div>
-
-                            {% elif sub_status == 'pending' %}
-                            <p class="text-sm text-blue-800/80 leading-relaxed mb-4">Your tour idea has been submitted and is under review by our team. We'll get back to you soon.</p>
-                            <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-bold text-sm">
-                                <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
-                                Under Review
-                            </div>
-                            <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>
-
-                            {% elif sub_status == 'rejected' %}
-                            <p class="text-sm text-red-800/80 leading-relaxed mb-4">This tour idea wasn't approved this time. Feel free to generate a new one!</p>
-                            <div class="flex items-center gap-2 bg-red-100 text-red-800 py-3 px-4 rounded-xl font-bold text-sm">
-                                <span class="material-symbols-outlined text-[18px]">cancel</span>
-                                Not Approved
-                            </div>
-
-                            {% else %}
-                            {# Not yet submitted #}
-                            <p class="text-sm text-purple-800/80 leading-relaxed mb-6">
-                                Happy with this route? Submit it for review and it could become an official Hidden SEA tour — available to the whole community.
-                            </p>
-                            <button id="submit-tour-btn"
-                                onclick="submitTourForReview('{{ tour_id }}')"
-                                class="block w-full text-center bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-md">
-                                Submit for Review →
-                            </button>
-                            <p class="text-[10px] text-center text-purple-700/60 mt-3 font-bold uppercase tracking-widest">Free to submit · Subject to editorial review</p>
-                            {% endif %}
-
-                        </div>
-                        <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600 opacity-[0.05] rounded-full blur-2xl"></div>
-                    </div>
-
-                    {% else %}
-                    {# ── Regular curated tour: show Vibe Check / Bounty panel ── #}
-                    <div class="bg-white rounded-2xl border-2 {% if tour.is_vetted %}border-green-100 bg-green-50/30{% else %}border-amber-100 bg-amber-50/30{% endif %} p-6 relative overflow-hidden">
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined {% if tour.is_vetted %}text-green-600{% else %}text-amber-600{% endif %} text-[24px]">
-                                        {% if tour.is_vetted %}verified{% else %}error_outline{% endif %}
-                                    </span>
-                                    <h4 class="font-black text-lg {% if tour.is_vetted %}text-green-900{% else %}text-amber-900{% endif %}">
-                                        {% if tour.is_vetted %}Vibe Checked ✓{% else %}AI Generated{% endif %}
-                                    </h4>
-                                </div>
-                                {% if not tour.is_vetted %}
-                                <span class="bg-amber-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">
-                                    IDR 100K BOUNTY
-                                </span>
-                                {% endif %}
-                            </div>
-
-                            {% if tour.is_vetted %}
-                            <p class="text-sm text-green-800/80 leading-relaxed mb-4">
-                                This tour was physically walked and verified by <strong>@{{ tour.viber_handle or 'explorer' }}</strong> on {{ tour.vetted_date or 'Mar 24, 2026' }}. All stops are accurate and accessible.
-                            </p>
-                            <div class="flex items-center gap-3 bg-white/60 backdrop-blur p-3 rounded-xl border border-green-200/50">
-                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-green-600">person</span>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Verified by</p>
-                                    <p class="text-sm font-bold text-green-900">@{{ tour.viber_handle or 'bali_viber' }}</p>
-                                </div>
-                            </div>
-                            {% else %}
-                            <p class="text-sm text-amber-800/80 leading-relaxed mb-6">
-                                This route is 100% AI-generated. While usually accurate, it hasn't been human-verified yet. Help the community by claiming the bounty.
-                            </p>
-
-                            {% if not session.user %}
-                                <a href="/login?next=/vibe" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
-                                    Log in to Claim Bounty
-                                </a>
-                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Valid for registered Vibers only</p>
-
-                            {% elif session.user.role not in ['viber', 'admin'] %}
-                                <a href="/become-viber" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
-                                    Become a Viber to Claim
-                                </a>
-                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Apply to join the Viber programme</p>
-
-                            {% elif tour.vibe_status == 'submitted' %}
-                                <div class="w-full text-center bg-amber-50 border-2 border-amber-200 text-amber-700 py-3 rounded-xl font-bold">
-                                    Submission Under Review
-                                </div>
-                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Our team will verify within 48 hrs</p>
-
-                            {% elif tour.user_has_claim %}
-                                <a href="/vibe/submit/{{ tour_id }}" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
-                                    Submit Photos &amp; Videos →
-                                </a>
-                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">You have an active claim on this tour</p>
-
-                            {% else %}
-                                <form action="/vibe/claim/{{ tour_id }}" method="POST">
-                                    <button type="submit" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">
-                                        Claim Bounty &amp; Walk Tour
-                                    </button>
-                                </form>
-                                <p class="text-[10px] text-center text-amber-700/60 mt-3 font-bold uppercase tracking-widest">Valid for registered Vibers only</p>
-                            {% endif %}
-
+                            {% if not sub_status %}
+                            <span class="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">Your Idea</span>
                             {% endif %}
                         </div>
-
-                        <div class="absolute -top-12 -right-12 w-32 h-32 {% if tour.is_vetted %}bg-green-600{% else %}bg-amber-600{% endif %} opacity-[0.05] rounded-full blur-2xl"></div>
+                        {% if sub_status == 'approved' %}
+                        <p class="text-sm text-green-800/80 leading-relaxed mb-4">Your tour idea has been approved and is being added to the main catalogue. Thank you for contributing!</p>
+                        <div class="flex items-center gap-2 bg-green-100 text-green-800 py-3 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">check_circle</span> Tour Approved
+                        </div>
+                        {% elif sub_status == 'pending' %}
+                        <p class="text-sm text-blue-800/80 leading-relaxed mb-4">Your tour idea is under review. We'll get back to you soon.</p>
+                        <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">hourglass_top</span> Under Review
+                        </div>
+                        <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>
+                        {% elif sub_status == 'rejected' %}
+                        <p class="text-sm text-red-800/80 leading-relaxed mb-4">This tour idea wasn't approved. Feel free to generate a new one!</p>
+                        <div class="flex items-center gap-2 bg-red-100 text-red-800 py-3 px-4 rounded-xl font-bold text-sm">
+                            <span class="material-symbols-outlined text-[18px]">cancel</span> Not Approved
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-purple-800/80 leading-relaxed mb-6">Happy with this route? Submit it for review — it could become an official Hidden SEA tour.</p>
+                        <button id="submit-tour-btn" onclick="submitTourForReview('{{ tour_id }}')"
+                            class="block w-full text-center bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition shadow-md">
+                            Submit for Review →
+                        </button>
+                        <p class="text-[10px] text-center text-purple-700/60 mt-3 font-bold uppercase tracking-widest">Free to submit · Subject to editorial review</p>
+                        {% endif %}
                     </div>
-                    {% endif %}
-
+                    <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600 opacity-[0.05] rounded-full blur-2xl"></div>
                 </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border-2 {% if tour.is_vetted %}border-green-100 bg-green-50/30{% else %}border-amber-100 bg-amber-50/30{% endif %} p-6 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined {% if tour.is_vetted %}text-green-600{% else %}text-amber-600{% endif %} text-[24px]">
+                                    {% if tour.is_vetted %}verified{% else %}error_outline{% endif %}
+                                </span>
+                                <h4 class="font-black text-lg {% if tour.is_vetted %}text-green-900{% else %}text-amber-900{% endif %}">
+                                    {% if tour.is_vetted %}Vibe Checked ✓{% else %}AI Generated{% endif %}
+                                </h4>
+                            </div>
+                            {% if not tour.is_vetted %}
+                            <span class="bg-amber-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">IDR 100K BOUNTY</span>
+                            {% endif %}
+                        </div>
+                        {% if tour.is_vetted %}
+                        <p class="text-sm text-green-800/80 leading-relaxed mb-4">
+                            Physically walked and verified by <strong>@{{ tour.viber_handle or 'explorer' }}</strong> on {{ tour.vetted_date or 'Mar 24, 2026' }}.
+                        </p>
+                        <div class="flex items-center gap-3 bg-white/60 backdrop-blur p-3 rounded-xl border border-green-200/50">
+                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-green-600">person</span>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-green-600 uppercase tracking-widest">Verified by</p>
+                                <p class="text-sm font-bold text-green-900">@{{ tour.viber_handle or 'bali_viber' }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-amber-800/80 leading-relaxed mb-6">AI-generated and not yet human-verified. Claim the bounty to walk and verify it.</p>
+                        {% if not session.user %}
+                        <a href="/login?next=/vibe" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">Log in to Claim Bounty</a>
+                        {% elif session.user.role not in ['viber', 'admin'] %}
+                        <a href="/become-viber" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">Become a Viber to Claim</a>
+                        {% elif tour.vibe_status == 'submitted' %}
+                        <div class="w-full text-center bg-amber-50 border-2 border-amber-200 text-amber-700 py-3 rounded-xl font-bold">Submission Under Review</div>
+                        {% elif tour.user_has_claim %}
+                        <a href="/vibe/submit/{{ tour_id }}" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">Submit Photos &amp; Videos →</a>
+                        {% else %}
+                        <form action="/vibe/claim/{{ tour_id }}" method="POST">
+                            <button type="submit" class="block w-full text-center bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition shadow-md">Claim Bounty &amp; Walk Tour</button>
+                        </form>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="absolute -top-12 -right-12 w-32 h-32 {% if tour.is_vetted %}bg-green-600{% else %}bg-amber-600{% endif %} opacity-[0.05] rounded-full blur-2xl"></div>
+                </div>
+                {% endif %}
 
-                <!-- Route Map -->
+                <!-- Static Map (no stops) -->
                 <div class="w-full">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xl font-extrabold flex items-center gap-2">
                             <span class="material-symbols-outlined text-[20px] text-gray-400">map</span>
                             Route Map
                         </h3>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            {% if tour.get('stops') %}{{ tour.stops | length }} STOPS{% else %}Powered by Google Maps{%
-                            endif %}
-                        </span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Powered by Google Maps</span>
                     </div>
-                    <div
-                        class="w-full h-[450px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative">
-
-                        {% if tour.get('stops') and tour.stops | length > 0 %}
-                        <!-- Leaflet Map for tours with stops -->
-                        <div id="stops-map" class="w-full h-full"></div>
-
+                    <div class="w-full h-[450px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative">
+                        {% if tour.google_maps_url and 'embed' in tour.google_maps_url %}
+                        <iframe src="{{ tour.google_maps_url }}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0"></iframe>
                         {% elif tour.google_maps_url %}
-                        {% if 'embed' in tour.google_maps_url %}
-                        <iframe src="{{ tour.google_maps_url }}" width="100%" height="100%" style="border:0;"
-                            allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                            class="absolute inset-0"></iframe>
-                        {% else %}
-                        <!-- Google Maps List Link -->
                         <div class="absolute inset-0 w-full h-full">
                             {% if tour.map_url %}
-                            <img src="{{ tour.map_url }}" alt="Map Background"
-                                class="w-full h-full object-cover opacity-20 blur-sm scale-110">
+                            <img src="{{ tour.map_url }}" alt="Map" class="w-full h-full object-cover opacity-20 blur-sm scale-110">
                             {% else %}
                             <div class="w-full h-full bg-gradient-to-br from-green-50 to-emerald-100"></div>
                             {% endif %}
                         </div>
                         <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
                             <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg max-w-sm">
-                                <span
-                                    class="material-symbols-outlined text-[48px] text-[#2D5A27] mb-4 block">pin_drop</span>
+                                <span class="material-symbols-outlined text-[48px] text-[#2D5A27] mb-4 block">pin_drop</span>
                                 <h4 class="text-lg font-extrabold mb-2">Detailed Route Map</h4>
-                                <p class="text-gray-500 text-sm mb-6">Access the full interactive list of stops, pinned
-                                    locations, and navigation directly in Google Maps.</p>
+                                <p class="text-gray-500 text-sm mb-6">Access the full interactive list of stops and navigation directly in Google Maps.</p>
                                 <a href="{{ tour.google_maps_url }}" target="_blank"
-                                    class="inline-flex items-center justify-center px-6 py-3 bg-[#2D5A27] hover:bg-[#234a1e] text-white font-bold rounded-full transition transform hover:scale-105 shadow-lg w-full gap-2">
+                                    class="inline-flex items-center justify-center px-6 py-3 bg-[#2D5A27] hover:bg-[#234a1e] text-white font-bold rounded-full transition w-full gap-2">
                                     <span>Open in Google Maps</span>
                                     <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                                 </a>
                             </div>
                         </div>
-                        {% endif %}
                         {% else %}
-                        <div
-                            class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-8 text-center">
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm p-8 text-center">
                             <div>
                                 <span class="material-symbols-outlined text-[48px] text-gray-300 mb-4 block">map</span>
                                 Map not available yet.
@@ -463,115 +803,17 @@
                         </div>
                         {% endif %}
                     </div>
-
-                    {% if tour.google_maps_url and not ('embed' in tour.google_maps_url) %}
-                    <a href="{{ tour.google_maps_url }}" target="_blank"
-                        class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#2D5A27] hover:underline">
-                        View full route on Google Maps <span
-                            class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    {% if tour.google_maps_url and 'embed' not in tour.google_maps_url %}
+                    <a href="{{ tour.google_maps_url }}" target="_blank" class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#2D5A27] hover:underline">
+                        View full route on Google Maps <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                     </a>
                     {% endif %}
                 </div>
 
-                <!-- Stops List -->
-                {% if tour.get('stops') and tour.stops | length > 0 %}
-                <div>
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[16px] text-[#2D5A27]">directions_walk</span>
-                        Walking Order
-                    </h3>
-                    <div class="space-y-3">
-                        {% for stop in tour.stops %}
-                        <div class="flex items-start gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-[#2D5A27]/30 transition group cursor-pointer"
-                            onclick="focusStop({{ loop.index0 }})">
-                            <div
-                                class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2D5A27]/10 border border-[#2D5A27]/30 flex items-center justify-center text-[#2D5A27] text-sm font-bold">
-                                {{ loop.index }}
-                            </div>
-                            <div>
-                                <h4 class="text-gray-900 font-semibold text-sm group-hover:text-[#2D5A27] transition">{{
-                                    stop.name }}</h4>
-                                {% if stop.get('subtitle') %}
-                                <p class="text-gray-400 text-xs italic">{{ stop.subtitle }}</p>
-                                {% endif %}
-                                {% if stop.get('description') %}
-                                <p class="text-gray-500 text-xs mt-1">{{ stop.description }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Top Rated Stops -->
-                <div id="top-rated-stops">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-extrabold flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[20px] text-gray-400">restaurant</span>
-                            Top Rated Stops
-                        </h3>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Maps</span>
-                    </div>
-                    <div class="places-scroll flex gap-4 overflow-x-auto pb-2" id="top-stops-container">
-                        <!-- Populated by JS from Google Maps data or static fallback -->
-                        <div
-                            class="flex-shrink-0 w-48 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-md transition">
-                            <div
-                                class="h-28 bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[36px] text-amber-400">restaurant</span>
-                            </div>
-                            <div class="p-3">
-                                <h5 class="font-bold text-sm mb-1 truncate">Loading...</h5>
-                                <p class="text-xs text-gray-400">Powered by Google Maps</p>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">info</span>
-                        Top rated restaurants and cafes near tour stops. <a href="{{ tour.google_maps_url or '#' }}"
-                            target="_blank" class="text-[#2D5A27] font-bold hover:underline">Explore on Google Maps
-                            →</a>
-                    </p>
-                </div>
-
-                <!-- Sights Along the Route -->
-                <div id="sights-along-route">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-extrabold flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[20px] text-gray-400">photo_camera</span>
-                            Sights Along the Route
-                        </h3>
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Google Maps</span>
-                    </div>
-                    <div class="places-scroll flex gap-4 overflow-x-auto pb-2" id="sights-container">
-                        <div
-                            class="flex-shrink-0 w-48 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-md transition">
-                            <div
-                                class="h-28 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[36px] text-green-400">photo_camera</span>
-                            </div>
-                            <div class="p-3">
-                                <h5 class="font-bold text-sm mb-1 truncate">Loading...</h5>
-                                <p class="text-xs text-gray-400">Powered by Google Maps</p>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-3 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">info</span>
-                        Notable landmarks and sights near the route. <a href="{{ tour.google_maps_url or '#' }}"
-                            target="_blank" class="text-[#2D5A27] font-bold hover:underline">Explore on Google Maps
-                            →</a>
-                    </p>
-                </div>
-
-                <!-- Tags (generated tours) -->
                 {% if tour.get('tags') %}
-                <div class="flex flex-wrap gap-2 mt-2">
+                <div class="flex flex-wrap gap-2">
                     {% for tag in tour.tags %}
-                    <span
-                        class="px-3 py-1 rounded-full text-xs bg-gray-100 border border-gray-200 text-gray-600 font-medium">{{
-                        tag }}</span>
+                    <span class="px-3 py-1 rounded-full text-xs bg-gray-100 border border-gray-200 text-gray-600 font-medium">{{ tag }}</span>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -579,29 +821,28 @@
             </div>
         </div>
     </section>
+    {% endif %}
 
+    {% if not tour.is_vetted %}
     <!-- Vibe Check Info Section -->
     <section id="vibe-check-info" class="py-16 px-6 bg-[#f0f7ef] border-t border-gray-100">
         <div class="max-w-4xl mx-auto text-center">
-            <div
-                class="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-2 rounded-full text-sm font-bold mb-6">
+            <div class="inline-flex items-center gap-2 bg-[#2D5A27]/10 text-[#2D5A27] px-4 py-2 rounded-full text-sm font-bold mb-6">
                 <span class="material-symbols-outlined text-[18px]">verified</span>
                 Vibe Check
             </div>
             <h2 class="text-3xl font-extrabold mb-4">Want this tour verified?</h2>
             <p class="text-gray-600 leading-relaxed mb-8 max-w-2xl mx-auto">
-                Submit this tour for our Vibe Check process. Real locals and travel experts will walk the route, verify
-                stops, and refine the narrative. Once approved, the tour earns the <span
-                    class="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✨
-                    Vetted</span> badge.
+                Real locals walk the route, verify stops, and refine the narrative. Once approved, the tour earns the
+                <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">✨ Vetted</span> badge.
             </p>
-            <button onclick="alert('Vibe Check submission coming soon!')"
-                class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-8 py-4 rounded-full font-bold hover:bg-[#234a1e] transition transform hover:scale-105 shadow-lg">
+            <a href="/vibe" class="inline-flex items-center gap-2 bg-[#2D5A27] text-white px-8 py-4 rounded-full font-bold hover:bg-[#234a1e] transition transform hover:scale-105 shadow-lg">
                 <span class="material-symbols-outlined text-[20px]">verified</span>
                 Submit for Vibe Check
-            </button>
+            </a>
         </div>
     </section>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="py-12 px-6 border-t border-gray-100">
@@ -610,187 +851,567 @@
                 <div class="w-6 h-6 bg-[#2D5A27] rounded-full flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-[10px]">waves</span>
                 </div>
-                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA. Built with Gemini.</p>
+                <p class="text-xs text-gray-400">&copy; 2026 Hidden SEA.</p>
             </div>
             <nav class="flex gap-8 text-xs font-bold text-gray-600 uppercase tracking-widest">
                 <a class="hover:text-black transition" href="/">Home</a>
-                <a class="hover:text-black transition" href="#">About</a>
-                <a class="hover:text-black transition" href="#">Privacy</a>
             </nav>
         </div>
     </footer>
 
-    <!-- Share Toast Notification -->
+    <!-- Share Toast -->
     <div class="share-toast" id="share-toast">Link copied to clipboard!</div>
 
-    <!-- Scripts -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Scripts                                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Jinja2 data blobs — type="application/json" keeps the JS linter away -->
+    <script type="application/json" id="tour-json">{{ tour | tojson }}</script>
+
     <script>
-        // Share Tour
+        // ── Tab switcher ─────────────────────────────────────────────
+        function switchTab(tab) {
+            ['stops', 'guide', 'tips'].forEach(t => {
+                const btn   = document.getElementById(`tab-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                const active = t === tab;
+                if (btn) btn.className = `tab-btn pb-3 text-sm font-bold border-b-2 ${active ? 'text-[#2D5A27] border-[#2D5A27]' : 'text-gray-400 border-transparent hover:text-gray-700'}`;
+                if (panel) panel.classList.toggle('hidden', !active);
+            });
+        }
+
+        // ── Hero intro audio player ───────────────────────────────────
+        {% if tour.audio_url and tour.get('stops') and tour.stops | length > 0 %}
+        (function () {
+            const introAudio = new Audio('{{ tour.audio_url }}');
+            introAudio.preload = 'metadata';
+
+            function fmtSecsHero(s) {
+                s = Math.round(s || 0);
+                return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+            }
+
+            introAudio.addEventListener('loadedmetadata', () => {
+                const dur = document.getElementById('intro-dur');
+                if (dur) dur.textContent = fmtSecsHero(introAudio.duration);
+            });
+            introAudio.addEventListener('timeupdate', () => {
+                if (!introAudio.duration) return;
+                const pct = (introAudio.currentTime / introAudio.duration) * 100;
+                const fill  = document.getElementById('intro-fill');
+                const thumb = document.getElementById('intro-thumb');
+                const cur   = document.getElementById('intro-cur');
+                if (fill)  fill.style.width  = pct + '%';
+                if (thumb) thumb.style.left  = pct + '%';
+                if (cur)   cur.textContent   = fmtSecsHero(introAudio.currentTime);
+            });
+            introAudio.addEventListener('ended', () => {
+                const ic = document.getElementById('intro-icon');
+                if (ic) ic.textContent = 'play_arrow';
+                introAudio.currentTime = 0;
+            });
+
+            window.toggleIntroAudio = function () {
+                const ic = document.getElementById('intro-icon');
+                if (introAudio.paused) {
+                    introAudio.play();
+                    if (ic) ic.textContent = 'pause';
+                } else {
+                    introAudio.pause();
+                    if (ic) ic.textContent = 'play_arrow';
+                }
+            };
+        })();
+        {% else %}
+        window.toggleIntroAudio = function() {};
+        {% endif %}
+
+        // ── Share ─────────────────────────────────────────────────────
         function shareTour() {
             const url = window.location.href;
             if (navigator.share) {
-                navigator.share({ title: '{{ tour.title }} - Hidden SEA', url: url });
+                const tourTitle = JSON.parse(document.getElementById('tour-json').textContent).title || 'Hidden SEA';
+                navigator.share({ title: tourTitle + ' - Hidden SEA', url });
             } else {
                 navigator.clipboard.writeText(url).then(() => {
-                    const toast = document.getElementById('share-toast');
-                    toast.classList.add('show');
-                    setTimeout(() => toast.classList.remove('show'), 2500);
+                    const t = document.getElementById('share-toast');
+                    t.classList.add('show');
+                    setTimeout(() => t.classList.remove('show'), 2500);
                 });
             }
         }
 
-        // Populate Top Rated Stops and Sights via Google Places API
-        (function () {
-            const topStopsContainer = document.getElementById('top-stops-container');
-            const sightsContainer = document.getElementById('sights-container');
-
-            // Determine center coordinates from tour data
-            const tourData = {{ tour | tojson
-        }};
-        let centerLat = -6.1375;
-        let centerLng = 106.8131;
-
-        if (tourData.center && tourData.center.lat && tourData.center.lng) {
-            centerLat = tourData.center.lat;
-            centerLng = tourData.center.lng;
-        } else if (tourData.stops && tourData.stops.length > 0) {
-            centerLat = tourData.stops.reduce((s, p) => s + p.lat, 0) / tourData.stops.length;
-            centerLng = tourData.stops.reduce((s, p) => s + p.lng, 0) / tourData.stops.length;
-        }
-
-        function renderPlaceCard(place) {
-            const photoHtml = place.photo_url
-                ? `<img src="${place.photo_url}" alt="${place.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />`
-                : `<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center"><span class="material-symbols-outlined text-[36px] text-gray-300">image</span></div>`;
-
-            const ratingHtml = place.rating
-                ? `<div class="flex items-center gap-0.5 mt-1"><span class="material-symbols-outlined text-[12px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span><span class="text-[11px] font-bold text-gray-600">${place.rating}</span>${place.review_count ? `<span class="text-[10px] text-gray-400">(${place.review_count})</span>` : ''}</div>`
-                : '';
-
-            return `
-                    <a href="${place.maps_url || '#'}" target="_blank" class="flex-shrink-0 w-52 bg-white rounded-2xl border border-gray-200 overflow-hidden group hover:shadow-lg hover:border-[#2D5A27]/20 transition cursor-pointer block">
-                        <div class="h-32 overflow-hidden bg-gray-100">
-                            ${photoHtml}
-                        </div>
-                        <div class="p-3">
-                            <h5 class="font-bold text-sm mb-0.5 truncate group-hover:text-[#2D5A27] transition">${place.name}</h5>
-                            <p class="text-[11px] text-gray-400 truncate flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[12px]">location_on</span>
-                                ${place.address ? place.address.split(',').slice(0, 2).join(',') : 'View on Maps'}
-                            </p>
-                            ${ratingHtml}
-                        </div>
-                    </a>
-                `;
-        }
-
-        function renderLoading(container) {
-            container.innerHTML = Array(4).fill('').map(() => `
-                    <div class="flex-shrink-0 w-52 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden animate-pulse">
-                        <div class="h-32 bg-gray-200"></div>
-                        <div class="p-3 space-y-2">
-                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
-                        </div>
-                    </div>
-                `).join('');
-        }
-
-        function renderError(container, type) {
-            const icon = type === 'restaurant' ? 'restaurant' : 'photo_camera';
-            container.innerHTML = `
-                    <div class="flex-shrink-0 w-full py-8 text-center text-gray-400">
-                        <span class="material-symbols-outlined text-[36px] text-gray-300 mb-2 block">${icon}</span>
-                        <p class="text-sm">Could not load places. <a href="{{ tour.google_maps_url or '#' }}" target="_blank" class="text-[#2D5A27] font-bold hover:underline">Try Google Maps →</a></p>
-                    </div>
-                `;
-        }
-
-        async function fetchPlaces(type, container) {
-            renderLoading(container);
-            try {
-                const resp = await fetch('/api/nearby-places', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat: centerLat, lng: centerLng, type: type, radius: 1000 })
-                });
-                const data = await resp.json();
-                if (data.places && data.places.length > 0) {
-                    container.innerHTML = data.places.map(p => renderPlaceCard(p)).join('');
-                } else {
-                    renderError(container, type);
-                }
-            } catch (e) {
-                console.error(`[Places] ${type} fetch error:`, e);
-                renderError(container, type);
-            }
-        }
-
-        // Fetch both types
-        fetchPlaces('restaurant', topStopsContainer);
-        fetchPlaces('tourist_attraction', sightsContainer);
-        }) ();
     </script>
 
     {% if tour.get('stops') and tour.stops | length > 0 %}
+    <!-- GPS data blobs -->
+    <script type="application/json" id="stops-json">{{ tour.stops | tojson }}</script>
+    <script type="application/json" id="has-audio-json">{{ (tour.audio_url is not none and tour.audio_url != '') | tojson }}</script>
+    <!-- ── GPS + Stops JS (enhanced layout only) ── -->
     <script>
-        // Leaflet map
-        const stops = {{ tour.stops | tojson }};
-        const map = L.map('stops-map', { zoomControl: true, attributionControl: true });
+    // ── DATA ─────────────────────────────────────────────────────────
+    const STOPS = JSON.parse(document.getElementById('stops-json').textContent);
+    const HAS_TOUR_AUDIO = JSON.parse(document.getElementById('has-audio-json').textContent);
+    STOPS.forEach((s, i) => {
+        s.audioFree = HAS_TOUR_AUDIO; // all stops treated as "unlocked" if tour has audio
+        s.audioLen  = '—';            // placeholder; real per-stop audio not yet in data model
+    });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+    // Build GPS simulation path (lerp between stop coordinates)
+    const GPS_PATH = [];
+    for (let i = 0; i < STOPS.length - 1; i++) {
+        const a = STOPS[i], b = STOPS[i + 1];
+        for (let t = 0; t < 1; t += 0.2) {
+            GPS_PATH.push({ lat: a.lat + (b.lat - a.lat) * t, lng: a.lng + (b.lng - a.lng) * t });
+        }
+    }
+    GPS_PATH.push({ lat: STOPS[STOPS.length - 1].lat, lng: STOPS[STOPS.length - 1].lng });
+
+    let audioUnlocked = HAS_TOUR_AUDIO;
+    let gpsActive     = false;
+    let userMarker    = null;
+    let gpsAccCircle  = null;
+    let nearbyStopIdx = null;
+    let visitedStops  = new Set();
+    let stopMarkers   = [];
+    let map;
+    const PROXIMITY_RADIUS = 80; // metres
+
+    // ── HAVERSINE ────────────────────────────────────────────────────
+    function haversine(lat1, lng1, lat2, lng2) {
+        const R = 6371000, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // ── MAP INIT ─────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+        map = L.map('tour-map', { zoomControl: false, attributionControl: true });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19, attribution: '&copy; OpenStreetMap'
         }).addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-        const markers = [];
-        const bounds = [];
+        const coords = STOPS.map(s => [s.lat, s.lng]);
 
-        stops.forEach((stop, i) => {
-            const latlng = [stop.lat, stop.lng];
-            bounds.push(latlng);
+        // Route polyline
+        if (coords.length > 1) {
+            L.polyline(coords, { color: '#2D5A27', weight: 3, dashArray: '8,12', lineCap: 'round', opacity: 0.7 }).addTo(map);
+        }
 
+        // Stop markers
+        STOPS.forEach((stop, i) => {
             const icon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div class="stop-marker">${i + 1}</div>`,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
+                className: '', iconSize: [28, 28], iconAnchor: [14, 14],
+                html: `<div class="stop-marker" id="map-marker-${i}">${i + 1}</div>`
             });
-
-            const marker = L.marker(latlng, { icon })
-                .bindPopup(`
-                <div style="min-width:180px;">
-                    <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:4px;">
-                        ${i + 1}. ${stop.name}
-                    </div>
-                    ${stop.subtitle ? `<div style="font-size:11px;color:#666;font-style:italic;margin-bottom:4px;">${stop.subtitle}</div>` : ''}
-                    ${stop.description ? `<div style="font-size:11px;color:#444;">${stop.description}</div>` : ''}
-                </div>
-            `)
-                .addTo(map);
-            markers.push(marker);
+            const m = L.marker([stop.lat, stop.lng], { icon })
+                .bindPopup(`<div style="min-width:160px;font-family:Inter,sans-serif">
+                    <div style="font-size:12px;font-weight:800;color:#111;margin-bottom:2px">${i + 1}. ${stop.name}</div>
+                    ${stop.subtitle ? `<div style="font-size:11px;color:#666;font-style:italic">${stop.subtitle}</div>` : ''}
+                </div>`)
+                .addTo(map)
+                .on('click', () => scrollToStop(i));
+            stopMarkers.push(m);
         });
 
-        if (bounds.length > 1) {
-            L.polyline(bounds, {
-                color: '#2D5A27',
-                weight: 3,
-                dashArray: '8, 12',
-                lineCap: 'round',
-                opacity: 0.7
-            }).addTo(map);
-            map.fitBounds(bounds, { padding: [40, 40] });
-        } else if (bounds.length === 1) {
-            map.setView(bounds[0], 15);
-        }
+        if (coords.length > 1) map.fitBounds(coords, { padding: [40, 40] });
+        else if (coords.length === 1) map.setView(coords[0], 15);
 
-        function focusStop(index) {
-            if (markers[index]) {
-                map.setView([stops[index].lat, stops[index].lng], 17, { animate: true });
-                markers[index].openPopup();
+        // Compute and display tour stats
+        computeTourStats();
+        renderStops();
+    });
+
+    // ── TOUR STATS ────────────────────────────────────────────────────
+    function computeTourStats() {
+        let totalDist = 0;
+        for (let i = 0; i < STOPS.length - 1; i++) {
+            totalDist += haversine(STOPS[i].lat, STOPS[i].lng, STOPS[i+1].lat, STOPS[i+1].lng);
+        }
+        const km   = (totalDist / 1000).toFixed(1);
+        const mins = Math.round(totalDist / 80); // ~80 m/min walking pace
+        const distEl = document.getElementById('tour-distance');
+        const timeEl = document.getElementById('tour-time');
+        if (distEl) distEl.textContent = `${km} km total`;
+        if (timeEl) timeEl.textContent = `~${mins} min walking`;
+
+        // Also pre-compute per-stop walk segments for renderStops
+        STOPS.forEach((stop, i) => {
+            if (i < STOPS.length - 1) {
+                const d = haversine(stop.lat, stop.lng, STOPS[i+1].lat, STOPS[i+1].lng);
+                const m = Math.round(d / 80);
+                stop._duration = `~${m} min · ${(d/1000).toFixed(1)} km to next stop`;
+            } else {
+                stop._duration = 'End of tour';
+            }
+        });
+    }
+
+    // ── STOPS RENDERING ───────────────────────────────────────────────
+    function renderStops() {
+        const el = document.getElementById('stops-list');
+        el.innerHTML = '';
+
+        STOPS.forEach((stop, i) => {
+            const isFree    = stop.audioFree || audioUnlocked;
+            const isVisited = visitedStops.has(i);
+            const isNearby  = nearbyStopIdx === i;
+            const isLast    = i === STOPS.length - 1;
+
+            const walkSegment = !isLast ? `
+                <div class="walk-connector">
+                    <span class="material-symbols-outlined text-[13px]">arrow_downward</span>
+                    <span class="walk-line"></span>
+                    <span>${stop._duration || ''}</span>
+                    <span class="walk-line"></span>
+                </div>` : '';
+
+            const audioBlock = isFree ? `
+                ${STOPS[i] && STOPS[i].audio_url ? `
+                <div class="bg-[#f8faf7] rounded-xl p-3 border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold text-[#2D5A27] uppercase tracking-widest flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[13px]">headphones</span> Stop ${i + 1} Audio Guide
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="event.stopPropagation();toggleStopAudio(${i})" class="w-8 h-8 rounded-full bg-[#2D5A27] flex items-center justify-center hover:bg-[#234a1e] transition flex-shrink-0">
+                            <span id="stop-play-icon-${i}" class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings:'FILL' 1">play_arrow</span>
+                        </button>
+                        <div class="flex-1">
+                            <div class="audio-track" onclick="event.stopPropagation()">
+                                <div class="audio-fill" id="stop-fill-${i}" style="width:0%"></div>
+                                <div class="audio-thumb" id="stop-thumb-${i}" style="left:0%"></div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-mono" id="stop-time-${i}">0:00</span><span class="text-[10px] text-gray-300 font-mono" id="stop-duration-${i}"></span>
+                    </div>
+                    ${isNearby ? `<p class="text-[10px] text-[#2D5A27] font-bold mt-2 flex items-center gap-1"><span class="material-symbols-outlined text-[11px]">place</span>GPS confirmed — you're here</p>` : ''}
+                </div>` : `
+                <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100">
+                    <span class="material-symbols-outlined text-amber-400 text-[15px]">schedule</span>
+                    <span class="text-[11px] text-amber-700 font-medium">Audio guide coming soon</span>
+                </div>`}` : `
+                <div class="relative rounded-xl overflow-hidden">
+                    <div class="unlock-overlay">
+                        <span class="material-symbols-outlined text-indigo-400 text-[28px]">lock</span>
+                        <p class="text-xs font-bold text-gray-700">Audio locked</p>
+                        <button onclick="event.stopPropagation();unlockAudio()" class="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-indigo-700">
+                            Unlock all audio — $3
+                        </button>
+                    </div>
+                    <div class="locked-audio bg-[#f8faf7] rounded-xl p-3 border border-gray-200">
+                        <div class="flex items-center gap-3 opacity-60">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><span class="material-symbols-outlined text-gray-400 text-[16px]">headphones</span></div>
+                            <div class="flex-1"><div class="audio-track"><div class="audio-fill" style="width:30%"></div><div class="audio-thumb" style="left:30%"></div></div></div>
+                        </div>
+                    </div>
+                </div>`;
+
+            el.innerHTML += `
+                <div>
+                    <div class="stop-card bg-white rounded-2xl border-2 ${isVisited ? 'border-gray-100 visited-card' : 'border-gray-200'} ${isNearby ? 'nearby' : ''} p-4 cursor-pointer hover:border-[#2D5A27]/40 transition"
+                        id="stop-card-${i}" onclick="toggleStopExpand(${i})">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm
+                                ${isVisited ? 'bg-[#86a882] text-white' : 'bg-[#2D5A27] text-white'}">
+                                ${isVisited ? `<span class="material-symbols-outlined text-[15px]" style="font-variation-settings:'FILL' 1">check</span>` : `<span style="font-size:13px;font-weight:800">${i + 1}</span>`}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-gray-900 font-bold text-sm">${stop.name}</h4>
+                                    ${isNearby ? '<span class="nearby-badge"><span class="material-symbols-outlined text-[10px]">place</span>You\'re here</span>' : ''}
+                                    ${i === 0 && HAS_TOUR_AUDIO ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Free audio</span>' : ''}
+                                </div>
+                                ${stop.subtitle ? `<p class="text-gray-400 text-xs italic mt-0.5">${stop.subtitle}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                ${isNearby ? `<button onclick="event.stopPropagation();markVisited(${i})" class="flex items-center gap-1 bg-[#2D5A27] text-white px-2.5 py-1 rounded-full text-[11px] font-bold hover:bg-[#234a1e] transition"><span class="material-symbols-outlined text-[12px]">check</span>I'm here</button>` : ''}
+                                <span class="material-symbols-outlined text-gray-300 text-[18px]" id="chevron-${i}">expand_more</span>
+                            </div>
+                        </div>
+
+                        <!-- Expanded content -->
+                        <div id="stop-expand-${i}" class="hidden mt-4 pt-4 border-t border-gray-100">
+                            ${stop.description ? `<p class="text-gray-600 text-sm leading-relaxed mb-4">${stop.description}</p>` : ''}
+                            ${audioBlock}
+                            ${!isNearby ? `<button onclick="event.stopPropagation();markVisited(${i})" class="mt-3 flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#2D5A27] transition border border-gray-200 px-3 py-1.5 rounded-full hover:border-[#2D5A27]/30">
+                                <span class="material-symbols-outlined text-[14px]">place</span> I'm here (manual)
+                            </button>` : ''}
+                        </div>
+                    </div>
+                    ${walkSegment}
+                </div>`;
+        });
+
+        updateProgress();
+    }
+
+    function toggleStopExpand(i) {
+        const el = document.getElementById(`stop-expand-${i}`);
+        const ch = document.getElementById(`chevron-${i}`);
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            ch.textContent = 'expand_less';
+            scrollToStop(i);
+        } else {
+            el.classList.add('hidden');
+            ch.textContent = 'expand_more';
+        }
+    }
+
+    function scrollToStop(i) {
+        const card = document.getElementById(`stop-card-${i}`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (stopMarkers[i]) {
+            map.setView([STOPS[i].lat, STOPS[i].lng], 17, { animate: true });
+            stopMarkers[i].openPopup();
+        }
+    }
+
+    function markVisited(i) {
+        visitedStops.add(i);
+        renderStops();
+        // Re-expand the card after re-render
+        setTimeout(() => {
+            const el = document.getElementById(`stop-expand-${i}`);
+            if (el && el.classList.contains('hidden')) toggleStopExpand(i);
+        }, 50);
+    }
+
+    function updateProgress() {
+        const n = visitedStops.size;
+        const total = STOPS.length;
+        const lbl = document.getElementById('progress-label');
+        const bar = document.getElementById('progress-bar');
+        if (lbl) lbl.textContent = `${n} / ${total} visited`;
+        if (bar) bar.style.width = `${(n / total) * 100}%`;
+    }
+
+    // ── PER-STOP AUDIO ────────────────────────────────────────────────
+    // Uses real Audio() when stop.audio_url is set; falls back to
+    // simulated progress bar for stops still marked audio_url: null.
+    const stopAudios = {};  // index → HTMLAudioElement
+
+    function getOrCreateAudio(i) {
+        const url = STOPS[i] && STOPS[i].audio_url;
+        if (!url) return null;
+        if (!stopAudios[i]) {
+            const audio = new Audio(url);
+            audio.preload = 'metadata';
+
+            audio.addEventListener('loadedmetadata', () => {
+                const dur = document.getElementById(`stop-duration-${i}`);
+                if (dur) dur.textContent = ` / ${fmtSecs(audio.duration)}`;
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                if (!audio.duration) return;
+                const pct = (audio.currentTime / audio.duration) * 100;
+                const fill  = document.getElementById(`stop-fill-${i}`);
+                const thumb = document.getElementById(`stop-thumb-${i}`);
+                const time  = document.getElementById(`stop-time-${i}`);
+                if (fill)  { fill.style.width = pct + '%'; }
+                if (thumb) { thumb.style.left = pct + '%'; }
+                if (time)  { time.textContent = fmtSecs(audio.currentTime); }
+            });
+
+            audio.addEventListener('ended', () => {
+                const ic = document.getElementById(`stop-play-icon-${i}`);
+                if (ic) ic.textContent = 'play_arrow';
+                audio.currentTime = 0;
+            });
+
+            stopAudios[i] = audio;
+        }
+        return stopAudios[i];
+    }
+
+    function fmtSecs(s) {
+        s = Math.round(s || 0);
+        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    }
+
+    // Simulated fallback (used when stop has no audio_url yet)
+    let stopTimers = {}, stopPcts = {}, stopPlaying = {};
+
+    function toggleStopAudio(i) {
+        if (!HAS_TOUR_AUDIO) return;
+
+        const audio = getOrCreateAudio(i);
+
+        if (audio) {
+            // ── Real audio path ──────────────────────────────────────
+            // Pause every other real stop
+            Object.entries(stopAudios).forEach(([k, a]) => {
+                if (Number(k) !== i && !a.paused) {
+                    a.pause();
+                    const ic = document.getElementById(`stop-play-icon-${k}`);
+                    if (ic) ic.textContent = 'play_arrow';
+                }
+            });
+            // Also stop any simulated timers
+            Object.keys(stopPlaying).forEach(k => {
+                if (stopPlaying[k]) { stopPlaying[k] = false; clearTimeout(stopTimers[k]); }
+            });
+
+            if (audio.paused) {
+                audio.play().catch(() => {});
+                document.getElementById(`stop-play-icon-${i}`).textContent = 'pause';
+            } else {
+                audio.pause();
+                document.getElementById(`stop-play-icon-${i}`).textContent = 'play_arrow';
+            }
+        } else {
+            // ── Simulated fallback path (no audio_url) ───────────────
+            if (stopPlaying[i]) {
+                stopPlaying[i] = false; clearTimeout(stopTimers[i]);
+                document.getElementById(`stop-play-icon-${i}`).textContent = 'play_arrow';
+            } else {
+                Object.keys(stopPlaying).forEach(k => {
+                    if (stopPlaying[k]) { stopPlaying[k] = false; clearTimeout(stopTimers[k]); const ic = document.getElementById(`stop-play-icon-${k}`); if (ic) ic.textContent = 'play_arrow'; }
+                });
+                // Also pause any real audio that's playing
+                Object.entries(stopAudios).forEach(([k, a]) => {
+                    if (!a.paused) { a.pause(); const ic = document.getElementById(`stop-play-icon-${k}`); if (ic) ic.textContent = 'play_arrow'; }
+                });
+                stopPlaying[i] = true;
+                document.getElementById(`stop-play-icon-${i}`).textContent = 'pause';
+                tickStopAudio(i);
             }
         }
+    }
+
+    function tickStopAudio(i) {
+        if (!stopPlaying[i]) return;
+        stopPcts[i] = (stopPcts[i] || 0) + 0.4;
+        if (stopPcts[i] >= 100) { stopPcts[i] = 100; stopPlaying[i] = false; document.getElementById(`stop-play-icon-${i}`).textContent = 'play_arrow'; }
+        const fill  = document.getElementById(`stop-fill-${i}`);
+        const thumb = document.getElementById(`stop-thumb-${i}`);
+        const time  = document.getElementById(`stop-time-${i}`);
+        if (fill)  { fill.style.width = stopPcts[i] + '%'; if (thumb) thumb.style.left = stopPcts[i] + '%'; }
+        const lenSecs = 180;
+        const secs = Math.round((stopPcts[i] / 100) * lenSecs);
+        if (time) time.textContent = fmtSecs(secs);
+        if (stopPlaying[i]) stopTimers[i] = setTimeout(() => tickStopAudio(i), 300);
+    }
+
+    // ── GPS ───────────────────────────────────────────────────────────
+    let watchId = null;
+    function toggleGPS() {
+        gpsActive = !gpsActive;
+        const btn    = document.getElementById('gps-btn');
+        const status = document.getElementById('gps-status');
+        const sim    = document.getElementById('gps-sim');
+
+        if (gpsActive) {
+            btn.classList.add('border-blue-400', 'text-blue-600');
+            btn.classList.remove('border-gray-200');
+            status.textContent = 'GPS on';
+            status.classList.replace('text-gray-400', 'text-blue-500');
+            sim.classList.remove('hidden');
+            // Try real geolocation first
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    pos => placeUserOnMap(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+                    () => {} // silent fallback — user can use the sim slider
+                );
+            }
+            // Initialise sim dot near stop 0
+            placeUserOnMap(STOPS[0].lat + 0.0002, STOPS[0].lng + 0.0002, 30);
+        } else {
+            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+            btn.classList.remove('border-blue-400', 'text-blue-600');
+            btn.classList.add('border-gray-200');
+            status.textContent = 'GPS off';
+            status.classList.replace('text-blue-500', 'text-gray-400');
+            sim.classList.add('hidden');
+            if (userMarker)   { map.removeLayer(userMarker);   userMarker   = null; }
+            if (gpsAccCircle) { map.removeLayer(gpsAccCircle); gpsAccCircle = null; }
+            hideProximityAlert(); nearbyStopIdx = null; renderStops();
+        }
+    }
+
+    function placeUserOnMap(lat, lng, acc) {
+        const gpsIcon = L.divIcon({
+            className: '', iconSize: [20, 20], iconAnchor: [10, 10],
+            html: `<div class="gps-dot-outer"><div class="gps-dot-inner"></div></div>`
+        });
+        if (userMarker)   map.removeLayer(userMarker);
+        if (gpsAccCircle) map.removeLayer(gpsAccCircle);
+        userMarker   = L.marker([lat, lng], { icon: gpsIcon, zIndexOffset: 1000 }).addTo(map);
+        gpsAccCircle = L.circle([lat, lng], { radius: acc || 30, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.08, weight: 1 }).addTo(map);
+        checkProximity(lat, lng);
+    }
+
+    function simulateGPS(pct) {
+        const idx = Math.min(Math.floor((pct / 100) * (GPS_PATH.length - 1)), GPS_PATH.length - 1);
+        const pt  = GPS_PATH[idx];
+        placeUserOnMap(
+            pt.lat + 0.00008 * (Math.random() - 0.5),
+            pt.lng + 0.00008 * (Math.random() - 0.5),
+            25
+        );
+    }
+
+    function checkProximity(lat, lng) {
+        let nearest = null, minDist = Infinity;
+        STOPS.forEach((s, i) => {
+            const d = haversine(lat, lng, s.lat, s.lng);
+            if (d < minDist) { minDist = d; nearest = i; }
+        });
+        if (minDist < PROXIMITY_RADIUS) {
+            nearbyStopIdx = nearest;
+            showProximityAlert(nearest, Math.round(minDist));
+            // Auto-expand nearest card
+            const el = document.getElementById(`stop-expand-${nearest}`);
+            if (el && el.classList.contains('hidden')) toggleStopExpand(nearest);
+            // Highlight map marker
+            document.querySelectorAll('.stop-marker').forEach(m => m.classList.remove('active'));
+            const mm = document.getElementById(`map-marker-${nearest}`);
+            if (mm) mm.classList.add('active');
+        } else {
+            nearbyStopIdx = null;
+            hideProximityAlert();
+            document.querySelectorAll('.stop-marker').forEach(m => m.classList.remove('active'));
+        }
+        renderStops();
+    }
+
+    function showProximityAlert(idx, dist) {
+        const el = document.getElementById('proximity-alert');
+        document.getElementById('proximity-text').textContent = `You're ${dist}m from Stop ${idx + 1}: ${STOPS[idx].name}`;
+        el.classList.remove('hidden');
+    }
+    function hideProximityAlert() { document.getElementById('proximity-alert').classList.add('hidden'); }
+
+    function triggerNearbyAudio() {
+        if (nearbyStopIdx === null) return;
+        const el = document.getElementById(`stop-expand-${nearbyStopIdx}`);
+        if (el && el.classList.contains('hidden')) toggleStopExpand(nearbyStopIdx);
+        if (audioUnlocked) setTimeout(() => toggleStopAudio(nearbyStopIdx), 200);
+        else unlockAudio();
+    }
+
+    // ── UNLOCK ────────────────────────────────────────────────────────
+    function unlockAudio() {
+        const confirmed = confirm('Unlock all audio guides for this tour — $3 one-time?\n\n(Demo: click OK to simulate purchase)');
+        if (!confirmed) return;
+        audioUnlocked = true;
+        const btn = document.getElementById('unlock-btn');
+        if (btn) {
+            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> Audio Unlocked`;
+            btn.classList.replace('bg-indigo-600', 'bg-green-600');
+            btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+            btn.onclick = null;
+        }
+        renderStops();
+    }
     </script>
+
+    {% elif tour.get('stops') == None or tour.stops | length == 0 %}
+    {# Nothing — no stops map needed for the no-stops layout #}
     {% endif %}
 
     {% if tour.get('generated') and not tour.get('submission_status') %}
@@ -799,34 +1420,27 @@
             const btn = document.getElementById('submit-tour-btn');
             btn.disabled = true;
             btn.textContent = 'Submitting…';
-
             try {
-                const res = await fetch('/api/submit-tour', {
+                const res  = await fetch('/api/submit-tour', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({tour_id: tourId})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tour_id: tourId })
                 });
                 const data = await res.json();
-
                 if (res.ok) {
-                    // Swap button for a success state without full reload
                     btn.parentElement.innerHTML = `
                         <div class="flex items-center gap-2 bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-bold text-sm">
-                            <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
-                            Under Review
+                            <span class="material-symbols-outlined text-[18px]">hourglass_top</span> Under Review
                         </div>
-                        <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>
-                    `;
+                        <p class="text-[10px] text-blue-700/60 mt-3 font-bold uppercase tracking-widest text-center">Typically reviewed within 48 hours</p>`;
                 } else if (data.error === 'already_submitted') {
                     btn.textContent = 'Already Submitted';
                 } else {
-                    btn.disabled = false;
-                    btn.textContent = 'Submit for Review →';
+                    btn.disabled = false; btn.textContent = 'Submit for Review →';
                     alert(data.error || 'Submission failed. Please try again.');
                 }
             } catch (e) {
-                btn.disabled = false;
-                btn.textContent = 'Submit for Review →';
+                btn.disabled = false; btn.textContent = 'Submit for Review →';
                 alert('Network error. Please try again.');
             }
         }
@@ -834,5 +1448,4 @@
     {% endif %}
 
 </body>
-
 </html>
