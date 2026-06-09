@@ -155,7 +155,7 @@
         {% endif %}
 
         <div class="oauth-options">
-            <a href="/login/google{% if next_url %}?next={{ next_url }}{% endif %}" class="oauth-btn google-btn">
+            <a href="/login/google{% if next_url %}?next={{ next_url | urlencode }}{% endif %}" class="oauth-btn google-btn">
                 <img src="https://www.google.com/favicon.ico" class="oauth-icon" alt="Google">
                 Continue with Google
             </a>

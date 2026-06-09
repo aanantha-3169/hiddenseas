@@ -147,15 +147,18 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    """Redirect to Supabase Google OAuth. Stashes the post-login destination."""
+    """Redirect to Supabase Google OAuth. Encodes the post-login destination
+    directly into the callback URL so it survives the cross-origin OAuth round-trip."""
     next_url = request.args.get('next', '') or ''
     # Only allow relative paths to prevent open-redirect abuse; default to homepage
     if not next_url or not next_url.startswith('/'):
         next_url = '/'
-    session['_next_url'] = next_url
+    import urllib.parse
     app_base_url = os.getenv("APP_BASE_URL", "http://localhost:5001")
-    callback_url = f"{app_base_url}/auth/callback"
-    oauth_url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={callback_url}"
+    # Pass next_url as a query param on the callback so we don't rely on the
+    # session cookie surviving the Supabase cross-origin redirect.
+    callback_url = f"{app_base_url}/auth/callback?next={urllib.parse.quote(next_url, safe='')}"
+    oauth_url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={urllib.parse.quote(callback_url, safe='')}"
     return redirect(oauth_url)
 
 @app.route('/auth/callback')
@@ -163,6 +166,7 @@ def auth_callback():
     """Receives the OAuth redirect. Serves a JS bridge that reads
     the access_token from the URL fragment and POSTs it to /auth/session."""
     return render_template('auth_callback.html')
+
 
 def _unique_handle(base: str) -> str:
     """Return the base handle if unclaimed, otherwise append a suffix until unique."""
@@ -181,12 +185,13 @@ def auth_session():
     data = request.json
     access_token = data.get('access_token')
     refresh_token = data.get('refresh_token')
+    # next_url is now passed directly in the POST body by auth_callback.html
+    # (encoded in the callback URL by login_google, survives the OAuth round-trip)
+    raw_next = data.get('next_url', '') or ''
+    next_url = raw_next if raw_next.startswith('/') else '/'
 
     if not access_token:
         return jsonify({"error": "No token provided"}), 400
-
-    # Grab the post-login destination before we overwrite the session
-    next_url = session.pop('_next_url', '/')
 
     try:
         user_resp = supabase.auth.get_user(access_token)
